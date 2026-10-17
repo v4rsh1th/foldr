@@ -31,6 +31,8 @@ test.describe('navigation', () => {
     await page.goto('/');
     await addFiles(page, 'letter-3.pdf');
     await expect(page.getByRole('heading', { name: /What would you like to do/ })).toBeVisible();
+    // Conditional content must never leak through as literal text.
+    await expect(page.locator('section.panel')).not.toContainText(/\b(false|null|undefined)\b/);
     await page.locator('section.panel').getByRole('link', { name: /Split PDF/ }).click();
     await expect(page.getByText('letter-3.pdf')).toBeVisible();
     await expect(page.locator('.file-item__meta').getByText('3 pages', { exact: true })).toBeVisible();

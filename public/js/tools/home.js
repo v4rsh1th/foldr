@@ -1,5 +1,5 @@
 import { pluralize } from '../core/format.js';
-import { h } from '../ui/dom.js';
+import { h, replaceChildren } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { createDropZone } from '../ui/drop-zone.js';
 import { TOOLS } from './tool-shell.js';
@@ -42,7 +42,8 @@ export function mount({ container, handOff }) {
     if (!pending.length) return;
     const many = pending.length > 1;
     const title = many ? `${pluralize(pending.length, 'file')} selected` : pending[0].name;
-    chooser.replaceChildren(
+    // The dom.js helper skips false/null children (e.g. the multi-file note).
+    replaceChildren(chooser,
       h('div', { class: 'cluster' },
         h('h2', { class: 'tool-section__title', tabIndex: -1, text: `What would you like to do with ${many ? 'these files' : 'this file'}?` }),
         h('button', { type: 'button', class: 'btn btn--ghost', onClick: () => { pending = []; renderChooser(); } }, icon('close'), 'Clear'),
