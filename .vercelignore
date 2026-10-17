@@ -1,0 +1,7 @@
+# Not needed to build or serve the static site.
+tests/
+test-results/
+playwright-report/
+dist/
+node_modules/
+*.log

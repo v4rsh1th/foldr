@@ -151,8 +151,10 @@ if (isMain) {
   const port = Number.parseInt(process.env.PORT ?? '3000', 10);
   const host = process.env.HOST ?? '127.0.0.1';
   const production = DEFAULT_PRODUCTION;
-  statSync(path.join(PUBLIC_DIR, 'index.html'));
-  createApp({ production }).listen(port, host, () => {
+  // FOLDR_PUBLIC_DIR lets you serve (and test) the built dist/ folder.
+  const publicDir = process.env.FOLDR_PUBLIC_DIR ? path.resolve(process.env.FOLDR_PUBLIC_DIR) : PUBLIC_DIR;
+  statSync(path.join(publicDir, 'index.html'));
+  createApp({ production, publicDir }).listen(port, host, () => {
     console.log(`Foldr is running at http://${host === '0.0.0.0' ? 'localhost' : host}:${port} (${production ? 'production' : 'development'})`);
   });
 }

@@ -100,3 +100,21 @@ test('the client never posts documents anywhere', () => {
   assert.doesNotMatch(sources, /\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|indexedDB/);
   assert.doesNotMatch(sources, /\beval\(|new Function\(|innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
 });
+
+test('vercel.json sends the same security and cache headers as the Express server', async () => {
+  const vercel = JSON.parse(readFileSync(path.join(publicDir, '..', 'vercel.json'), 'utf8'));
+  assert.equal(vercel.framework, null, 'must deploy as a static site, not an Express function');
+  assert.equal(vercel.outputDirectory, 'dist');
+  assert.equal(vercel.buildCommand, 'npm run build');
+  const rule = (source) => Object.fromEntries(vercel.headers.find((h) => h.source === source).headers.map((x) => [x.key.toLowerCase(), x.value]));
+  const all = rule('/(.*)');
+  const response = await fetch(`${base}/`);
+  const security = ['content-security-policy', 'cross-origin-opener-policy', 'cross-origin-resource-policy', 'origin-agent-cluster',
+    'referrer-policy', 'x-content-type-options', 'x-dns-prefetch-control', 'x-frame-options', 'x-permitted-cross-domain-policies',
+    'permissions-policy', 'cache-control'];
+  for (const name of security) assert.equal(all[name], response.headers.get(name), name);
+  const vendor = await fetch(`${base}/vendor/pdf-lib@1.17.1/pdf-lib.esm.min.js`);
+  assert.equal(rule('/vendor/(.*)')['cache-control'], vendor.headers.get('cache-control'));
+  const sw = await fetch(`${base}/sw.js`);
+  assert.equal(rule('/sw.js')['cache-control'], sw.headers.get('cache-control'));
+});

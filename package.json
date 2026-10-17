@@ -20,7 +20,8 @@
     "test:all": "npm test && npm run test:browser",
     "size": "node scripts/measure-size.js",
     "build": "node scripts/build.js",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "test:dist": "npm run build && FOLDR_PUBLIC_DIR=dist playwright test"
   },
   "dependencies": {
     "compression": "1.8.2",

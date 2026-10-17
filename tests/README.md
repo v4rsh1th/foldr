@@ -5,6 +5,7 @@
 | `npm run test:unit` | `tests/unit/` — pure logic | `node --test` |
 | `npm run test:integration` | `tests/integration/` — real PDF operations and the server | `node --test` |
 | `npm run test:browser` | `tests/browser/` — end-to-end in headless Chromium | Playwright |
+| `npm run test:dist` | the browser suite against the built `dist/` (what Vercel serves) | Playwright |
 
 All dev tooling (Playwright, `pdfjs-dist` for Node-side verification) is in `devDependencies`. The production app doesn't load it.
 

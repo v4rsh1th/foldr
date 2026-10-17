@@ -41,9 +41,25 @@ npm run test:all       # everything
 
 See [tests/README.md](tests/README.md) for what each suite covers and a manual checklist.
 
-### Production
+### Deploying to Vercel
 
-The Express server is the reference deployment:
+Foldr deploys to Vercel as a **static site**: all PDF work happens in the browser, so no server function is needed. Everything is configured in [vercel.json](vercel.json).
+
+1. Push the repository to GitHub and choose **Add New → Project** in Vercel, then import it. No settings need changing: `vercel.json` sets the install command (`npm ci`), build command (`npm run build`) and output directory (`dist`).
+2. Deploy. Vercel serves over HTTPS, which the service worker needs for offline use and installation.
+
+Or deploy from the CLI with `npx vercel` (preview) or `npx vercel --prod`.
+
+Notes:
+- `vercel.json` sets `"framework": null` on purpose. Without it, Vercel detects `server.js` as an Express app and deploys it as a serverless function. The static deployment is faster and keeps the guarantee that no server code ever sees a request carrying a document.
+- `vercel.json` sends the same CSP, security headers and cache policy as the Express server. A test (`tests/integration/server.test.js`) fails if the two drift apart.
+- Each build stamps `sw.js` with a content hash of `public/`, so every deployment that changes a file triggers the in-app "new version available" prompt, and unchanged files keep the same hash.
+- `npm run test:dist` builds `dist/` and runs the full browser suite against it, which is exactly what Vercel serves.
+- `.vercelignore` keeps test fixtures out of the upload.
+
+### Self-hosting with Express
+
+The bundled Express server is the alternative to static hosting:
 
 ```bash
 npm ci --omit=dev

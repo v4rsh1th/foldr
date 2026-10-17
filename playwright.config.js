@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `node server.js`,
-    env: { PORT: String(PORT) },
+    env: { PORT: String(PORT), ...(process.env.FOLDR_PUBLIC_DIR ? { FOLDR_PUBLIC_DIR: process.env.FOLDR_PUBLIC_DIR } : {}) },
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: false,
   },
