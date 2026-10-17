@@ -37,8 +37,18 @@ export function mount({ container, handOff }) {
     },
   });
 
+  // While files are waiting, the chooser replaces the main tool grid: its
+  // cards hand the files over, whereas the grid's plain links would open a
+  // tool without them.
+  const toolsSection = h('section', { 'aria-labelledby': 'tools-heading', class: 'stack' },
+    h('h2', { id: 'tools-heading', class: 'visually-hidden', text: 'Tools' }),
+    h('div', { class: 'tool-grid' }, TOOLS.map((tool) => toolCard(tool))),
+  );
+
   function renderChooser() {
     chooser.hidden = pending.length === 0;
+    toolsSection.hidden = pending.length > 0;
+    dropZone.setCompact(pending.length > 0);
     if (!pending.length) return;
     const many = pending.length > 1;
     const title = many ? `${pluralize(pending.length, 'file')} selected` : pending[0].name;
@@ -64,10 +74,7 @@ export function mount({ container, handOff }) {
     ),
     dropZone.element,
     chooser,
-    h('section', { 'aria-labelledby': 'tools-heading', class: 'stack' },
-      h('h2', { id: 'tools-heading', class: 'visually-hidden', text: 'Tools' }),
-      h('div', { class: 'tool-grid' }, TOOLS.map((tool) => toolCard(tool))),
-    ),
+    toolsSection,
     h('section', { class: 'home-trust', 'aria-label': 'Why Foldr' },
       h('p', { class: 'trust-item' }, icon('shield'), h('span', {}, h('strong', { text: 'Stays on your device' }), 'PDFs are processed in your browser. Nothing is uploaded.')),
       h('p', { class: 'trust-item' }, icon('offline'), h('span', {}, h('strong', { text: 'Works offline' }), 'Install Foldr or revisit it, and it keeps working without a connection.')),

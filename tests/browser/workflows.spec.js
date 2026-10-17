@@ -33,6 +33,12 @@ test.describe('navigation', () => {
     await expect(page.getByRole('heading', { name: /What would you like to do/ })).toBeVisible();
     // Conditional content must never leak through as literal text.
     await expect(page.locator('section.panel')).not.toContainText(/\b(false|null|undefined)\b/);
+    // The chooser replaces the main grid, so each tool appears exactly once.
+    await expect(page.getByRole('link', { name: /Split PDF/ })).toHaveCount(1);
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect(page.getByRole('heading', { name: /What would you like to do/ })).toBeHidden();
+    await expect(page.getByRole('link', { name: /Split PDF/ })).toHaveCount(1);
+    await addFiles(page, 'letter-3.pdf');
     await page.locator('section.panel').getByRole('link', { name: /Split PDF/ }).click();
     await expect(page.getByText('letter-3.pdf')).toBeVisible();
     await expect(page.locator('.file-item__meta').getByText('3 pages', { exact: true })).toBeVisible();
