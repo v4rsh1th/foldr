@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Foldr · Private PDF tools</title>
+  <meta name="description" content="Merge, split, organize, rotate and compress PDFs privately in your browser. Free, no uploads, no account, no watermarks.">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="color-scheme" content="light dark">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header">
+    <div class="container header-inner">
+      <a class="brand" href="#/" aria-label="Foldr home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect width="32" height="32" rx="8" fill="#4f46e5"/>
+          <path d="M10 7h8.5L23 11.5V25H10z" fill="#fff"/>
+          <path d="M18.5 7v4.5H23" fill="#c7cbfb"/>
+          <path d="M13 16h7M13 19.5h7" stroke="#4f46e5" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>Foldr</span>
+      </a>
+      <div class="header-meta">
+        <span id="network-status" class="pill" role="status" hidden></span>
+        <span class="pill pill--success pill--hide-mobile" title="PDFs are processed in your browser and never uploaded.">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          Files stay on your device
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="app-main container" tabindex="-1">
+    <div id="view">
+      <noscript>
+        <p>Foldr needs JavaScript to process PDFs in your browser. Please enable it and reload.</p>
+      </noscript>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <p><strong>Privacy:</strong> your PDFs are opened and processed entirely in this browser. Foldr has no upload endpoints, no analytics and no tracking; files and results are never stored or sent anywhere. The first visit downloads the app; after that it also works offline.</p>
+      <p>Foldr <span id="app-version"></span> · Open source (MIT)</p>
+    </div>
+  </footer>
+
+  <div id="toast-region" class="toast-region"></div>
+  <div id="sr-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
+</body>
+</html>

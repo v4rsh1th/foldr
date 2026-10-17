@@ -1,0 +1,119 @@
+:root {
+  color-scheme: light;
+
+  /* Colour */
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f3f6;
+  --color-surface-sunken: #e9ecf1;
+  --color-border: #dfe3ea;
+  --color-border-strong: #c5ccd8;
+  --color-text: #161a22;
+  --color-text-muted: #4f5868;
+  --color-text-subtle: #6b7383;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef0ff;
+  --color-accent-border: #c7cbfb;
+  --color-on-accent: #ffffff;
+  --color-success: #15803d;
+  --color-success-soft: #ecfdf3;
+  --color-success-border: #b7e7c8;
+  --color-warning: #a35200;
+  --color-warning-soft: #fff7e8;
+  --color-warning-border: #f5d49a;
+  --color-danger: #c42b2b;
+  --color-danger-hover: #a82222;
+  --color-danger-soft: #fff1f1;
+  --color-danger-border: #f3c1c1;
+  --color-focus: #4f46e5;
+  --color-overlay: rgb(15 18 26 / 0.45);
+  --color-thumb-bg: #ffffff;
+
+  /* Typography (system fonts only: no downloads) */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing (4px scale) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Shape and depth */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.08), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 16px 40px rgb(16 24 40 / 0.16);
+
+  /* Layout */
+  --container: 72rem;
+  --touch-target: 44px;
+  --header-height: 3.5rem;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #0f1218;
+    --color-surface: #171b23;
+    --color-surface-muted: #1d222c;
+    --color-surface-sunken: #12161d;
+    --color-border: #2a313d;
+    --color-border-strong: #3a4352;
+    --color-text: #e8ebf1;
+    --color-text-muted: #aab2c0;
+    --color-text-subtle: #8c95a5;
+    --color-accent: #8187ff;
+    --color-accent-hover: #9ba0ff;
+    --color-accent-soft: #23264a;
+    --color-accent-border: #3d4290;
+    --color-on-accent: #0f1218;
+    --color-success: #4ade80;
+    --color-success-soft: #12261a;
+    --color-success-border: #1f5134;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #2a2110;
+    --color-warning-border: #5c4512;
+    --color-danger: #f87171;
+    --color-danger-hover: #fca5a5;
+    --color-danger-soft: #2c1517;
+    --color-danger-border: #6b2a2d;
+    --color-focus: #9ba0ff;
+    --color-overlay: rgb(0 0 0 / 0.6);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}
