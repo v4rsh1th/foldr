@@ -51,4 +51,13 @@ await copyFiles(path.join(pdfjsSrc, 'wasm'), path.join(pdfjsDir, 'wasm'), [
   'LICENSE_QCMS', 'LICENSE_PDFJS_QCMS',
 ]);
 
-console.log(`Vendored pdf-lib@${pdfLibVersion} and pdfjs@${pdfjsVersion} into public/vendor/`);
+// Inter (variable: weight + optical size), self-hosted so no font service is
+// ever contacted. Latin is precached; Latin Extended loads only when a page
+// contains those characters (via unicode-range).
+const interVersion = await versionOf('@fontsource-variable/inter');
+const interSrc = path.join(modules, '@fontsource-variable', 'inter');
+const interDir = path.join(vendorRoot, `inter@${interVersion}`);
+await copyFiles(path.join(interSrc, 'files'), interDir, ['inter-latin-opsz-normal.woff2', 'inter-latin-ext-opsz-normal.woff2']);
+await copyFiles(interSrc, interDir, ['LICENSE']);
+
+console.log(`Vendored pdf-lib@${pdfLibVersion}, pdfjs@${pdfjsVersion} and inter@${interVersion} into public/vendor/`);

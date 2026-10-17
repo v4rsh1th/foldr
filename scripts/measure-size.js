@@ -20,8 +20,9 @@ const groups = new Map();
 const rows = [];
 for (const file of files) {
   const data = readFileSync(path.join(publicDir, file));
-  const gz = /\.(png|wasm)$/.test(file) ? data.length : gzipSync(data, { level: 9 }).length;
+  const gz = /\.(png|wasm|woff2)$/.test(file) ? data.length : gzipSync(data, { level: 9 }).length;
   const group = file.startsWith('vendor/pdfjs') ? 'PDF.js (preview)' : file.startsWith('vendor/pdf-lib') ? 'pdf-lib (processing)'
+    : file.startsWith('vendor/inter') ? 'Inter font (Latin)'
     : file.startsWith('js/') || file === 'sw.js' ? 'Foldr JavaScript' : file.startsWith('css/') ? 'CSS' : 'HTML, manifest, icons';
   const g = groups.get(group) ?? { raw: 0, gz: 0, count: 0 };
   groups.set(group, { raw: g.raw + data.length, gz: g.gz + gz, count: g.count + 1 });
@@ -38,9 +39,11 @@ for (const [name, g] of groups) {
   gz += g.gz;
 }
 console.log(`${kb(raw)} ${kb(gz)}  TOTAL first visit (precached for offline)`);
-const home = ['index.html', 'css/tokens.css', 'css/base.css', 'css/layout.css', 'css/components.css', 'css/utilities.css']
+const home = ['index.html', 'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/layout.css', 'css/components.css', 'css/utilities.css']
   .concat(files.filter((f) => f.startsWith('js/') && !f.startsWith('js/operations') && !f.startsWith('js/workers')));
-const homeGz = home.reduce((sum, f) => sum + gzipSync(readFileSync(path.join(publicDir, f))).length, 0);
-console.log(`\nNeeded to render the home screen: ${kb(homeGz).trim()} gzip (PDF libraries load later, in the background or on demand).`);
+const font = files.find((f) => f.endsWith('.woff2'));
+const homeGz = home.reduce((sum, f) => sum + gzipSync(readFileSync(path.join(publicDir, f))).length, 0)
+  + (font ? statSync(path.join(publicDir, font)).size : 0);
+console.log(`\nNeeded to render the home screen: ${kb(homeGz).trim()} gzip, including the font (PDF libraries load later, in the background or on demand).`);
 const lazy = statSync(path.join(publicDir, pdfjs, 'cmaps')).isDirectory();
 if (lazy) console.log('Not precached (fetched on demand, then cached): PDF.js CJK CMaps and standard font substitutes (~2.6 MB).');

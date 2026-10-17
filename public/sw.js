@@ -32,6 +32,7 @@ const PRECACHE = [
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
   'icons/apple-touch-icon.png',
+  'css/fonts.css',
   'css/tokens.css',
   'css/base.css',
   'css/layout.css',
@@ -80,6 +81,7 @@ const PRECACHE = [
   `${PDFJS}wasm/openjpeg.wasm`,
   `${PDFJS}wasm/jbig2.wasm`,
   `${PDFJS}wasm/qcms_bg.wasm`,
+  'vendor/inter@5.3.0/inter-latin-opsz-normal.woff2',
 ];
 
 const scopeUrl = (path) => new URL(path, self.registration.scope).href;

@@ -14,11 +14,16 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   font-family: var(--font-sans);
-  font-size: var(--text-md);
+  font-feature-settings: var(--font-features);
+  font-optical-sizing: auto;
+  font-size: 0.9375rem;
   line-height: var(--leading-normal);
+  letter-spacing: -0.006em;
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, p, ol, ul, figure {
@@ -28,7 +33,16 @@ h1, h2, h3, p, ol, ul, figure {
 h1, h2, h3 {
   line-height: var(--leading-tight);
   font-weight: var(--weight-semibold);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-snug);
+  text-wrap: balance;
+}
+
+h1 {
+  letter-spacing: var(--tracking-tight);
+}
+
+p {
+  text-wrap: pretty;
 }
 
 ol, ul {
@@ -47,6 +61,8 @@ a:hover {
 
 button, input, select, textarea {
   font: inherit;
+  font-feature-settings: inherit;
+  letter-spacing: inherit;
   color: inherit;
 }
 

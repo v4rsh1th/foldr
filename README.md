@@ -75,6 +75,7 @@ core/*.js           (pure logic, unit-tested in Node)   all via pdf-lib
 - **Parsing once.** Each file is parsed once during validation, and the worker keeps that parsed document for Merge and Split. Organize, Rotate and Compress change a document in place, so they parse a fresh copy. If the worker is restarted after a cancel, files are re-registered automatically.
 - **Pure core.** Page-range parsing, page order, rotation maths, filenames, validation and ZIP writing live in `public/js/core/`. They have no DOM or pdf-lib dependencies and are unit-tested directly.
 - **State.** Each tool view owns its state. Page arrangements are immutable arrays kept in an undo history. An operation token ([state.js](public/js/state.js)) ensures that a cancelled or superseded operation can never overwrite a newer result.
+- **Typography.** Foldr uses Inter (SIL OFL) as a variable font with weight and optical-size axes, self-hosted in `public/vendor/inter@5.3.0/`. Headings automatically get Inter's tighter Display design. The Latin subset (71 KB) is preloaded and precached; Latin Extended loads only for pages that need those characters. A metric-matched local fallback keeps text from shifting while the font loads.
 - **No framework, no bundler.** Native ES modules, about 187 KB of app source (67 KB gzipped). Every file is precached, so no build step is needed.
 
 ### Notable PDF decisions
@@ -102,7 +103,7 @@ Measured on the test fixtures: a text PDF with uncompressed streams went from 92
 
 - PDFs are read from the local file picker or drag and drop as `File` objects. They are processed in the page and its workers and saved as `Blob` downloads (`blob:` URLs, revoked once the result is discarded).
 - The server is a static file server. It has **no upload endpoints and no body parsers**, and it answers every method other than GET/HEAD with `405`. A test checks this.
-- No analytics, telemetry, ads, third-party scripts, fonts or CDNs. The CSP is `connect-src 'self'` and all assets are same-origin. The browser tests fail if any request leaves the origin or uses a method other than GET/HEAD while documents are processed.
+- No analytics, telemetry, ads, third-party scripts, font services or CDNs. The Inter typeface is self-hosted. The CSP is `connect-src 'self'` and all assets, including the font, are same-origin. The browser tests fail if any request leaves the origin or uses a method other than GET/HEAD while documents are processed.
 - Nothing is persisted. The client never uses `localStorage`, IndexedDB or cookies, and a test checks the client source for this. The service worker caches only versioned app files; a test confirms no PDFs or `blob:` URLs end up in Cache Storage.
 - Filenames are treated as untrusted. They are shown only via `textContent` (a test uses an HTML-injection filename) and sanitised before they become download names. They never appear in URLs or logs.
 - Logs contain error names and codes only, never document contents or names.
@@ -111,7 +112,7 @@ Measured on the test fixtures: a text PDF with uncompressed streams went from 92
 
 - `manifest.webmanifest` includes name, icons (192/512 and a maskable icon), theme colour, `standalone` display, scope and start URL, plus shortcuts.
 - **Service worker** ([public/sw.js](public/sw.js)):
-  - **Atomic, versioned app shell.** All app files, both PDF libraries and the image decoders (about 1.24 MB gzipped) are precached into a cache named after a content hash of `public/`. A new version installs side by side; the old one keeps serving its own files until the user clicks **Reload** in the update notice. Old caches are then deleted. This prevents mixing new JavaScript with old libraries.
+  - **Atomic, versioned app shell.** All app files, both PDF libraries and the image decoders (about 1.31 MB gzipped) are precached into a cache named after a content hash of `public/`. A new version installs side by side; the old one keeps serving its own files until the user clicks **Reload** in the update notice. Old caches are then deleted. This prevents mixing new JavaScript with old libraries.
   - **Navigation.** App navigations are answered from the cached shell, so it is always consistent and works offline. Other URLs go to the network and fall back to `offline.html`.
   - **Static assets.** Same-origin assets are cache-first. Optional PDF.js data (CJK CMaps, standard-font substitutes, about 2.6 MB) is cached the first time it is used.
   - **Never cached:** user files and outputs, non-GET requests, cross-origin requests.
@@ -139,11 +140,12 @@ Other headers: `nosniff`, `no-referrer`, COOP/CORP `same-origin`, `X-Frame-Optio
 | | Raw | Gzip |
 | --- | ---: | ---: |
 | Foldr JavaScript (36 files) | 187 KB | 67 KB |
-| CSS (5 files) | 34 KB | 7 KB |
+| CSS (6 files) | 36 KB | 8 KB |
+| Inter font (Latin, variable) | 71 KB | 71 KB |
 | pdf-lib | 511 KB | 201 KB |
 | PDF.js (library, worker, 3 WASM decoders) | 2,177 KB | 948 KB |
-| **Total first visit (precached)** | **2.9 MB** | **1.24 MB** |
-| Needed to render the home screen | | 60 KB |
+| **Total first visit (precached)** | **3.0 MB** | **1.31 MB** |
+| Needed to render the home screen (including the font) | | 132 KB |
 
 The PDF.js worker (1.26 MB raw) is by far the largest dependency. PDF libraries load lazily when first needed.
 
@@ -182,4 +184,4 @@ Phones and low-memory devices will be slower. Files are held in memory while pro
 
 ## License
 
-MIT. See [LICENSE](LICENSE). pdf-lib (MIT) and PDF.js (Apache-2.0) are distributed with their own licenses in `public/vendor/`.
+MIT. See [LICENSE](LICENSE). pdf-lib (MIT), PDF.js (Apache-2.0) and Inter (SIL Open Font License 1.1) are distributed with their own licenses in `public/vendor/`.
