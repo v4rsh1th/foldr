@@ -57,7 +57,7 @@ test.describe('navigation', () => {
     await expect(page.getByText('1 rotated')).toBeVisible();
     await page.getByRole('link', { name: 'All tools' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Leave' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /Private PDF tools/ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything you need to work with PDFs' })).toBeVisible();
   });
 });
 

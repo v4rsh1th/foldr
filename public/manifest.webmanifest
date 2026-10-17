@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Foldr",
   "short_name": "Foldr",
-  "description": "Private PDF tools that run in your browser: merge, split, organize, rotate and compress.",
+  "description": "Merge, split, organize, rotate and compress PDFs in your browser.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

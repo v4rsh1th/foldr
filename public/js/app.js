@@ -45,7 +45,7 @@ function mountView(name) {
     handOff: (files) => appState.set({ pendingFiles: files }),
   });
   const tool = toolById(name);
-  document.title = tool ? `${tool.title} · Foldr` : 'Foldr · Private PDF tools';
+  document.title = tool ? `${tool.title} · Foldr` : 'Foldr · PDF tools';
   // Move focus to the new view's heading for keyboard and screen reader users,
   // except on first load where the browser's default focus is expected.
   if (router?.current !== null && document.readyState === 'complete') view.focus?.();

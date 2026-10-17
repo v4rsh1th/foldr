@@ -24,12 +24,12 @@ function toolCard(tool, { disabled = false, onClick } = {}) {
 export function mount({ container, handOff }) {
   let pending = [];
   const chooser = h('section', { class: 'panel stack', 'aria-live': 'polite', hidden: true });
-  const heading = h('h1', { tabIndex: -1, text: 'Private PDF tools that run in your browser' });
+  const heading = h('h1', { tabIndex: -1, text: 'Everything you need to work with PDFs' });
 
   const dropZone = createDropZone({
     multiple: true,
-    title: 'Choose or drop PDFs to get started',
-    hint: 'Your files are opened on this device and never uploaded.',
+    title: 'Choose PDF files',
+    hint: 'or drag and drop them here',
     buttonLabel: 'Select PDFs',
     onFiles: (files) => {
       pending = files;
@@ -70,16 +70,11 @@ export function mount({ container, handOff }) {
   container.append(h('div', { class: 'home' },
     h('div', { class: 'home-intro' },
       heading,
-      h('p', { text: 'Merge, split, organize, rotate and compress PDFs. Everything happens on your device: no uploads, no account, no watermarks.' }),
+      h('p', { text: 'Merge, split, organize, rotate and compress your documents, quickly and securely.' }),
     ),
     dropZone.element,
     chooser,
     toolsSection,
-    h('section', { class: 'home-trust', 'aria-label': 'Why Foldr' },
-      h('p', { class: 'trust-item' }, icon('shield'), h('span', {}, h('strong', { text: 'Stays on your device' }), 'PDFs are processed in your browser. Nothing is uploaded.')),
-      h('p', { class: 'trust-item' }, icon('offline'), h('span', {}, h('strong', { text: 'Works offline' }), 'Install Foldr or revisit it, and it keeps working without a connection.')),
-      h('p', { class: 'trust-item' }, icon('free'), h('span', {}, h('strong', { text: 'Free, with no catches' }), 'No sign-up, watermarks, daily limits, ads or tracking.')),
-    ),
   ));
 
   return {

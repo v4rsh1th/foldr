@@ -161,11 +161,6 @@
   color: var(--color-warning);
 }
 
-@media (max-width: 479px) {
-  .pill--hide-mobile {
-    display: none;
-  }
-}
 
 /* Cards and panels ---------------------------------------------------------- */
 
@@ -236,26 +231,6 @@
   font-size: var(--text-sm);
 }
 
-.trust-item {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
-.trust-item svg {
-  width: 20px;
-  height: 20px;
-  color: var(--color-success);
-  margin-top: 1px;
-}
-
-.trust-item strong {
-  display: block;
-  color: var(--color-text);
-  font-weight: var(--weight-semibold);
-}
 
 /* Drop zone --------------------------------------------------------------- */
 
