@@ -1,11 +1,22 @@
 // Shared success/export panel: editable filenames, downloads, optional ZIP,
-// open-in-browser preview and "start over".
+// open-in-browser preview, optional sharing (Web Share, where the device
+// can share files) and "start over".
 
 import { formatBytes, pluralize } from '../core/format.js';
 import { sanitizeFilename, stripPdfExtension } from '../core/filenames.js';
 import { h } from './dom.js';
 import { icon } from './icons.js';
 import { toast, announce } from './notifications.js';
+
+/** True when this browser can hand a PDF to the system share sheet (mail, messaging, AirDrop…). */
+function canShareFiles() {
+  try {
+    return typeof navigator.canShare === 'function'
+      && navigator.canShare({ files: [new File([new Uint8Array(1)], 'test.pdf', { type: 'application/pdf' })] });
+  } catch {
+    return false;
+  }
+}
 
 export function createResultPanel({
   title,
@@ -18,8 +29,25 @@ export function createResultPanel({
   content = null,
   onStartOver,
   startOverLabel = 'Start over',
+  share = false,
   onDownloaded = () => {},
 }) {
+  const sharing = share && canShareFiles();
+
+  async function shareOutput(output, nameInput) {
+    const name = sanitizeFilename(`${nameInput.value}.pdf`);
+    try {
+      await navigator.share({ files: [new File([output.blob], name, { type: 'application/pdf' })], title: stripPdfExtension(name) });
+      output.name = name;
+      onDownloaded(output);
+    } catch (error) {
+      // AbortError: the user closed the share sheet.
+      if (error?.name === 'AbortError') return;
+      console.error('Foldr: share failed:', error?.name);
+      toast('This file couldn’t be shared. Download it instead, then send it from your files.', { type: 'error' });
+    }
+  }
+
   function download(output, nameInput) {
     try {
       const name = exportManager.download(output, `${nameInput.value}.pdf`);
@@ -59,6 +87,7 @@ export function createResultPanel({
       ),
       h('div', { class: 'output-item__buttons' },
         h('button', { type: 'button', class: 'btn btn--secondary', 'aria-label': `Open ${outputs.length > 1 ? `output ${index + 1}` : 'result'} in a new tab`, onClick: () => exportManager.open(output) }, icon('open'), 'Open'),
+        sharing && h('button', { type: 'button', class: 'btn btn--secondary', onClick: () => shareOutput(output, nameInput) }, icon('share'), 'Share'),
         h('button', { type: 'button', class: `btn ${outputs.length === 1 && tone === 'success' ? 'btn--primary' : 'btn--secondary'}`, onClick: () => download(output, nameInput) }, icon('download'), downloadLabel),
       ),
       h('p', { class: 'output-item__meta', text: `${pluralize(output.pageCount, 'page')} · ${formatBytes(output.size)}` }),

@@ -8,6 +8,7 @@ import { createProgress } from '../ui/progress.js';
 import { announce } from '../ui/notifications.js';
 
 export const TOOLS = [
+  { id: 'scan', title: 'Scan Document', icon: 'scan', description: 'Photograph pages and turn them into a crisp, clean PDF.', input: 'images' },
   { id: 'merge', title: 'Merge PDFs', icon: 'merge', description: 'Combine several PDFs into one, in the order you choose.', multiple: true },
   { id: 'split', title: 'Split PDF', icon: 'split', description: 'Extract pages, split every page, or split by ranges.' },
   { id: 'organize', title: 'Organize PDF', icon: 'organize', description: 'Reorder, rotate and delete pages visually.' },

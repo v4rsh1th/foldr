@@ -12,6 +12,8 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     acceptDownloads: true,
     trace: 'retain-on-failure',
+    // A synthetic camera for the scanner tests; no permission prompt.
+    launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@mobile/ },

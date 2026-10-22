@@ -12,6 +12,7 @@ import { mergeDocuments } from '../operations/merge.js';
 import { splitDocument } from '../operations/split.js';
 import { editDocument } from '../operations/organize.js';
 import { compressDocument, compressionStreamSupported } from '../operations/compress.js';
+import { buildScanDocument } from '../operations/scan.js';
 
 const documents = new Map();
 
@@ -103,6 +104,12 @@ const handlers = {
     const output = await compressDocument(doc, { mode, codec: imageCodec, onProgress: progress });
     const buffer = ownBuffer(output.bytes);
     return { result: { buffer, pageCount: output.pageCount, stats: output.stats }, transfer: [buffer] };
+  },
+
+  async scan({ pages, pageSize, title }, progress) {
+    const output = await buildScanDocument(pages, { pageSize, title, onProgress: progress });
+    const buffer = ownBuffer(output.bytes);
+    return { result: { buffer, pageCount: output.pageCount }, transfer: [buffer] };
   },
 };
 

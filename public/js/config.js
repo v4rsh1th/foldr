@@ -28,3 +28,19 @@ export const THUMBNAILS = Object.freeze({
   concurrency: 2,
   rootMargin: '600px 0px',
 });
+
+// Document scanning. Photos are kept as captured; pages are rendered from
+// them only when the PDF is made, at the chosen resolution.
+export const SCAN = Object.freeze({
+  maxPages: 100,
+  // Working copy used for previews and the crop editor.
+  proxySide: 1600,
+  previewSide: 480,
+  detectSide: 480,
+  liveDetectSide: 320,
+  liveDetectIntervalMs: 220,
+  quality: {
+    high: { ppi: 300, jpegQuality: 0.86 },
+    standard: { ppi: 200, jpegQuality: 0.8 },
+  },
+});

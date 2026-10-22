@@ -1,6 +1,6 @@
 # Foldr
 
-Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It merges, splits, organizes, rotates and compresses PDFs on the user's own device: there are no uploads, accounts, watermarks, ads or tracking. It installs as a Progressive Web App (PWA) and keeps working offline.
+Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It merges, splits, organizes, rotates and compresses PDFs, and scans paper documents into PDFs, on the user's own device: there are no uploads, accounts, watermarks, ads or tracking. It installs as a Progressive Web App (PWA) and keeps working offline.
 
 | Tool | What it does |
 | --- | --- |
@@ -9,6 +9,14 @@ Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It
 | **Organize PDF** | Visual thumbnail grid: reorder (drag and drop, keyboard or toolbar), rotate, delete with undo/redo. |
 | **Rotate Pages** | Rotates the whole document, selected pages or single pages. Writes `/Rotate` into the file. |
 | **Compress PDF** | Lossless clean-up, plus two image re-encoding levels. Reports the real size change, including when the file gets larger. |
+| **Scan Document** | Photographs pages with the camera (or imports photos), finds the page edges, straightens the page and removes shadows. Looks: Document (colour), Black & white (1-bit, sharpest and smallest), Greyscale, Original. Corners can be adjusted by hand. The PDF can be downloaded or shared through the system share sheet. |
+
+### How scanning works
+
+- The live camera view outlines the page a few times a second from a 320 px copy of the frame. Photos are taken with `ImageCapture.takePhoto()` (full sensor resolution, autofocus) where available, otherwise from the video stream.
+- Each photo is processed in a dedicated worker ([workers/scan-worker.js](public/js/workers/scan-worker.js)): page detection on a 480 px copy ([core/scan-geometry.js](public/js/core/scan-geometry.js)), then a perspective warp and the clean-up filters ([core/scan-enhance.js](public/js/core/scan-enhance.js)). The clean-up estimates the lighting as a smooth background map, divides it out so the paper is evenly white, stretches contrast and sharpens edges.
+- Previews are rendered from a 1600 px working copy, so changing the look or crop is instant. The PDF is rendered from the original photos at 300 ppi (High) or 200 ppi (Standard). JPEG pages are embedded without re-encoding; black-and-white pages are 1-bit Flate images.
+- The server's `Permissions-Policy` allows the camera for Foldr's own origin only (`camera=(self)`). The camera stops as soon as the camera view closes.
 
 ## Quick start
 
