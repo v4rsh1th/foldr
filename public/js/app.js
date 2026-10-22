@@ -15,6 +15,7 @@ import { mount as mountMerge } from './tools/merge.js';
 import { mount as mountSplit } from './tools/split.js';
 import { mountOrganize, mountRotate } from './tools/page-editor.js';
 import { mount as mountCompress } from './tools/compress.js';
+import { mount as mountScan } from './tools/scan.js';
 import { toolById } from './tools/tool-shell.js';
 
 const VIEWS = {
@@ -24,6 +25,7 @@ const VIEWS = {
   organize: mountOrganize,
   rotate: mountRotate,
   compress: mountCompress,
+  scan: mountScan,
 };
 
 const viewRoot = document.getElementById('view');

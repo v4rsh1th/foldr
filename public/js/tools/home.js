@@ -51,6 +51,9 @@ export function mount({ container, handOff }) {
     dropZone.setCompact(pending.length > 0);
     if (!pending.length) return;
     const many = pending.length > 1;
+    // Photos can only be scanned; PDFs go to the PDF tools.
+    const photos = pending.every((file) => file.type.startsWith('image/'));
+    const tools = TOOLS.filter((tool) => (tool.input === 'images') === photos);
     const title = many ? `${pluralize(pending.length, 'file')} selected` : pending[0].name;
     // The dom.js helper skips false/null children (e.g. the multi-file note).
     replaceChildren(chooser,
@@ -59,8 +62,8 @@ export function mount({ container, handOff }) {
         h('button', { type: 'button', class: 'btn btn--ghost', onClick: () => { pending = []; renderChooser(); } }, icon('close'), 'Clear'),
       ),
       h('p', { class: 'muted small', text: title }),
-      many && h('p', { class: 'muted small', text: 'Only Merge works with several files at once. Other tools use the first file.' }),
-      h('div', { class: 'tool-grid' }, TOOLS.map((tool) => toolCard(tool, {
+      many && !photos && h('p', { class: 'muted small', text: 'Only Merge works with several files at once. Other tools use the first file.' }),
+      h('div', { class: 'tool-grid' }, tools.map((tool) => toolCard(tool, {
         onClick: () => handOff(pending),
       }))),
     );
@@ -70,7 +73,7 @@ export function mount({ container, handOff }) {
   container.append(h('div', { class: 'home' },
     h('div', { class: 'home-intro' },
       heading,
-      h('p', { text: 'Merge, split, organize, rotate and compress your documents, quickly and securely.' }),
+      h('p', { text: 'Merge, split, organize, rotate, compress and scan your documents, quickly and securely.' }),
     ),
     dropZone.element,
     chooser,

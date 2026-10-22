@@ -29,8 +29,9 @@ export class OperationError extends Error {
 }
 
 export class PdfWorkerClient {
-  constructor(url = new URL('./workers/pdf-worker.js', import.meta.url)) {
+  constructor(url = new URL('./workers/pdf-worker.js', import.meta.url), { name = 'foldr-pdf' } = {}) {
     this.url = url;
+    this.name = name;
     this.worker = null;
     this.generation = 0;
     this.pending = new Map();
@@ -39,7 +40,7 @@ export class PdfWorkerClient {
 
   ensureWorker() {
     if (this.worker) return this.worker;
-    const worker = new Worker(this.url, { type: 'module', name: 'foldr-pdf' });
+    const worker = new Worker(this.url, { type: 'module', name: this.name });
     worker.addEventListener('message', (event) => this.onMessage(event.data));
     worker.addEventListener('error', (event) => {
       event.preventDefault?.();

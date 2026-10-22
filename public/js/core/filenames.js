@@ -64,6 +64,7 @@ const OUTPUT_SUFFIX = {
 /** Default output filename for each tool. */
 export function defaultOutputName(tool, sourceName, detail) {
   if (tool === 'merge') return 'merged-document.pdf';
+  if (tool === 'scan') return sanitizeFilename(`scan-${detail}`);
   const base = baseNameOf(sourceName);
   if (tool === 'split') return sanitizeFilename(`${base}-pages-${detail}`);
   const suffix = OUTPUT_SUFFIX[tool];

@@ -87,8 +87,9 @@ export function createApp({ publicDir = PUBLIC_DIR, production = DEFAULT_PRODUCT
       strictTransportSecurity: false,
     }),
   );
+  // The camera is allowed for this origin only, for the document scanner.
   app.use((req, res, next) => {
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
     next();
   });
 

@@ -107,7 +107,7 @@ test('manifest is valid and installable metadata is present', async ({ page }) =
 
 test.describe('mobile layout @mobile', () => {
   test('no horizontal scrolling and touch-sized controls', async ({ page, problems }) => {
-    for (const route of ['/', '/#/merge', '/#/split', '/#/compress']) {
+    for (const route of ['/', '/#/merge', '/#/split', '/#/compress', '/#/scan']) {
       await page.goto(route);
       await page.waitForTimeout(150);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

@@ -12,7 +12,7 @@ test.afterEach(async ({ problems }) => {
 test.describe('navigation', () => {
   test('home lists every tool and switches tools without reloading', async ({ page }) => {
     await page.goto('/');
-    for (const name of ['Merge PDFs', 'Split PDF', 'Organize PDF', 'Rotate Pages', 'Compress PDF']) {
+    for (const name of ['Merge PDFs', 'Split PDF', 'Organize PDF', 'Rotate Pages', 'Compress PDF', 'Scan Document']) {
       await expect(page.getByRole('link', { name: new RegExp(name) }).first()).toBeVisible();
     }
     await page.evaluate(() => { window.__noReload = true; });
