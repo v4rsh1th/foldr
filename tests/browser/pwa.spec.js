@@ -21,7 +21,7 @@ test('installs a service worker, then starts and processes PDFs offline', async 
 
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything you need to work with PDFs' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything you need for PDFs and images' })).toBeVisible();
   await expect(page.locator('#network-status')).toHaveText(/Offline · ready/);
 
   await page.getByRole('link', { name: /Merge PDFs/ }).first().click();

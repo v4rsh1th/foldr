@@ -15,6 +15,10 @@
   --color-accent-hover: #4338ca;
   --color-accent-soft: #eef0ff;
   --color-accent-border: #c7cbfb;
+  /* Image tools, so they read as a separate family from the PDF tools. */
+  --color-image: #0f766e;
+  --color-image-soft: #e3f6f2;
+  --color-image-border: #9fded2;
   --color-on-accent: #ffffff;
   --color-success: #15803d;
   --color-success-soft: #ecfdf3;
@@ -97,6 +101,9 @@
     --color-accent-hover: #9ba0ff;
     --color-accent-soft: #23264a;
     --color-accent-border: #3d4290;
+    --color-image: #2dd4bf;
+    --color-image-soft: #113430;
+    --color-image-border: #1f5f57;
     --color-on-accent: #0f1218;
     --color-success: #4ade80;
     --color-success-soft: #12261a;
