@@ -127,6 +127,20 @@
   max-width: 48rem;
 }
 
+.tool-group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.tool-group__header h2 {
+  font-size: var(--text-lg);
+}
+
+.tool-group__header p {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
 .tool-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));

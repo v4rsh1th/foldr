@@ -8,7 +8,7 @@ import { createProgress } from '../ui/progress.js';
 import { announce } from '../ui/notifications.js';
 
 export const TOOLS = [
-  { id: 'scan', title: 'Scan Document', icon: 'scan', description: 'Photograph pages and turn them into a crisp, clean PDF.', input: 'images' },
+  { id: 'scan', title: 'Scan Document', icon: 'scan', description: 'Photograph pages and turn them into a crisp, clean PDF.', input: 'images', group: 'pdf' },
   { id: 'merge', title: 'Merge PDFs', icon: 'merge', description: 'Combine several PDFs into one, in the order you choose.', multiple: true },
   { id: 'split', title: 'Split PDF', icon: 'split', description: 'Extract pages, split every page, or split by ranges.' },
   { id: 'organize', title: 'Organize PDF', icon: 'organize', description: 'Reorder, rotate and delete pages visually.' },
@@ -17,12 +17,28 @@ export const TOOLS = [
   { id: 'compress-images', title: 'Compress Images', icon: 'image', description: 'Shrink photos and images, resize them or convert them to JPEG or WebP.', input: 'images' },
 ];
 
+// Tools are grouped on the home screen by what they produce. That's separate
+// from `input`, the files they accept: Scan Document takes photos but makes
+// a PDF, so it's listed with the PDF tools.
+export const TOOL_GROUPS = [
+  { id: 'pdf', title: 'PDF tools', description: 'Create, edit and shrink PDF documents.' },
+  { id: 'images', title: 'Image tools', description: 'Work with photos and pictures: JPEG, PNG, WebP or HEIC.' },
+];
+
+export const groupOf = (tool) => tool.group ?? (tool.input === 'images' ? 'images' : 'pdf');
+
+/** Icon tile for a tool, tinted by its group. */
+export function toolIcon(tool) {
+  const tint = groupOf(tool) === 'images' ? ' tool-card__icon--image' : '';
+  return h('span', { class: `tool-card__icon${tint}`, 'aria-hidden': 'true' }, icon(tool.icon));
+}
+
 export function toolById(id) {
   return TOOLS.find((tool) => tool.id === id);
 }
 
 export function createToolHeader(tool) {
-  const heading = h('h1', { tabIndex: -1 }, h('span', { class: 'tool-card__icon', 'aria-hidden': 'true' }, icon(tool.icon)), tool.title);
+  const heading = h('h1', { tabIndex: -1 }, toolIcon(tool), tool.title);
   const element = h('header', { class: 'tool-header' },
     h('a', { class: 'back-link', href: '#/' }, icon('back'), 'All tools'),
     heading,
