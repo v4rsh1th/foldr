@@ -34,13 +34,14 @@ export function createDropZone({
   hint = multiple ? 'or drag and drop them here' : 'or drag and drop it here',
   buttonLabel = multiple ? 'Select PDFs' : 'Select PDF',
   compact = false,
+  accept = PDF_ACCEPT,
   onFiles,
 }) {
   const inputId = uid('file-input');
   const input = h('input', {
     id: inputId,
     type: 'file',
-    accept: PDF_ACCEPT,
+    accept,
     multiple,
     class: 'visually-hidden',
     'aria-label': buttonLabel,

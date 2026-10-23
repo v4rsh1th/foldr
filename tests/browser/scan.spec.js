@@ -1,45 +1,8 @@
-import { deflateSync } from 'node:zlib';
-import { test, expect, download, inspectPdf } from './fixtures.js';
+import { test, expect, download, inspectPdf, png, fixturePath } from './fixtures.js';
 
 test.afterEach(async ({ problems }) => {
   expect(problems).toEqual([]);
 });
-
-function crc32(bytes) {
-  let crc = ~0;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let k = 0; k < 8; k += 1) crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
-  }
-  return ~crc >>> 0;
-}
-
-function png(width, height, pixel) {
-  const raw = Buffer.alloc((width * 3 + 1) * height);
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const o = y * (width * 3 + 1) + 1 + x * 3;
-      const [r, g, b] = pixel(x, y);
-      raw[o] = r;
-      raw[o + 1] = g;
-      raw[o + 2] = b;
-    }
-  }
-  const chunk = (type, data) => {
-    const length = Buffer.alloc(4);
-    length.writeUInt32BE(data.length);
-    const body = Buffer.concat([Buffer.from(type), data]);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body));
-    return Buffer.concat([length, body, crc]);
-  };
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(height, 4);
-  header[8] = 8;
-  header[9] = 2;
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
-}
 
 /** A dark desk with a slightly tilted portrait sheet (about 3:4) carrying lines of "text", shaded on one side. */
 function documentPhoto() {
@@ -94,6 +57,14 @@ test.describe('scan document', () => {
     const bw = await download(page, page.getByRole('button', { name: 'Download' }));
     expect((await inspectPdf(bw.bytes)).pages).toHaveLength(1);
     expect(bw.bytes.length).toBeLessThan(colour.bytes.length);
+  });
+
+  test('scans a HEIC photo', async ({ page }) => {
+    await page.goto('/#/scan');
+    await importPhotos(page, [fixturePath('../images/desk-600x680.heic')]);
+    const card = page.getByRole('listitem').filter({ hasText: 'Page 1' });
+    await expect(card.getByRole('img', { name: 'Page 1 preview' })).toBeVisible();
+    await expect(card.getByText('Check crop')).toHaveCount(0);
   });
 
   test('edits, rotates, reorders and deletes pages', async ({ page }) => {
@@ -155,11 +126,12 @@ test.describe('scan document', () => {
     await expect(page.getByRole('img', { name: /Page \d preview/ })).toHaveCount(2);
   });
 
-  test('photos dropped on the home screen are offered to the scanner only', async ({ page }) => {
+  test('photos dropped on the home screen are offered to the image tools only', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[type=file]').first().setInputFiles([{ name: 'desk.png', mimeType: 'image/png', buffer: documentPhoto() }]);
     const chooser = page.locator('section.panel');
-    await expect(chooser.getByRole('link')).toHaveCount(1);
+    await expect(chooser.getByRole('link')).toHaveCount(2);
+    await expect(chooser.getByRole('link', { name: /Compress Images/ })).toBeVisible();
     await chooser.getByRole('link', { name: /Scan Document/ }).click();
     await expect(page.getByRole('img', { name: 'Page 1 preview' })).toBeVisible();
   });

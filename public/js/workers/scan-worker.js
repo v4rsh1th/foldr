@@ -9,6 +9,7 @@
 import { SCAN } from '../config.js';
 import { detectDocument, luminance, quadSize, rotateQuad, warpPerspective, FULL_QUAD } from '../core/scan-geometry.js';
 import { applyScanFilter, packBits } from '../core/scan-enhance.js';
+import { decodeImage } from './heif-decoder.js';
 
 class ScanError extends Error {
   constructor(code, message) {
@@ -19,9 +20,9 @@ class ScanError extends Error {
 
 async function decode(blob) {
   try {
-    return await createImageBitmap(blob);
+    return await decodeImage(blob);
   } catch {
-    throw new ScanError('decode', 'This image couldn’t be opened. Use a JPEG, PNG or WebP photo.');
+    throw new ScanError('decode', 'This image couldn’t be opened. Use a JPEG, PNG, WebP or HEIC photo.');
   }
 }
 

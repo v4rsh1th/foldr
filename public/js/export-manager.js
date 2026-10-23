@@ -31,28 +31,32 @@ export function createExportManager() {
   }
 
   return {
-    createOutput({ buffer, name, pageCount, extra = {} }) {
-      if (!buffer || buffer.byteLength === 0) throw new Error('The generated file is empty.');
-      const blob = new Blob([buffer], { type: 'application/pdf' });
-      const output = { id: `o${nextOutputId}`, blob, name, pageCount, size: blob.size, ...extra };
+    /**
+     * Wraps a result as a downloadable output: a PDF from `buffer`, or any
+     * file from `blob` with its `extension` (e.g. ".jpg").
+     */
+    createOutput({ buffer, blob: source, name, pageCount, extension = '.pdf', extra = {} }) {
+      const blob = source ?? new Blob([buffer ?? []], { type: 'application/pdf' });
+      if (blob.size === 0) throw new Error('The generated file is empty.');
+      const output = { id: `o${nextOutputId}`, blob, name, pageCount, extension, size: blob.size, ...extra };
       nextOutputId += 1;
       return output;
     },
 
     download(output, filename = output.name) {
-      const name = sanitizeFilename(filename);
+      const name = sanitizeFilename(filename, { extension: output.extension });
       triggerDownload(urlFor(output), name);
       return name;
     },
 
-    /** Opens the PDF in a new tab using the browser's own viewer. */
+    /** Opens the file in a new tab using the browser's own viewer. */
     open(output) {
       const opened = window.open(urlFor(output), '_blank', 'noopener');
       return Boolean(opened) || opened === null;
     },
 
     async downloadZip(outputs, zipName) {
-      const names = uniqueFilenames(outputs.map((output) => sanitizeFilename(output.name)));
+      const names = uniqueFilenames(outputs.map((output) => sanitizeFilename(output.name, { extension: output.extension })));
       const entries = [];
       for (const [index, output] of outputs.entries()) {
         entries.push({ name: names[index], bytes: new Uint8Array(await output.blob.arrayBuffer()) });

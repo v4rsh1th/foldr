@@ -14,6 +14,7 @@ export const TOOLS = [
   { id: 'organize', title: 'Organize PDF', icon: 'organize', description: 'Reorder, rotate and delete pages visually.' },
   { id: 'rotate', title: 'Rotate Pages', icon: 'rotate', description: 'Rotate the whole document or selected pages.' },
   { id: 'compress', title: 'Compress PDF', icon: 'compress', description: 'Reduce file size with lossless or image-based options.' },
+  { id: 'compress-images', title: 'Compress Images', icon: 'image', description: 'Shrink photos and images, resize them or convert them to JPEG or WebP.', input: 'images' },
 ];
 
 export function toolById(id) {

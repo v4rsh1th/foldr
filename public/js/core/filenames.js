@@ -10,7 +10,12 @@ const WINDOWS_RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
 
 /** Removes a trailing ".pdf" (any case). */
 export function stripPdfExtension(name) {
-  return String(name ?? '').replace(/\.pdf$/i, '');
+  return stripExtension(name, '.pdf');
+}
+
+/** Removes a trailing `extension` (any case), e.g. ".jpg". */
+export function stripExtension(name, extension) {
+  return String(name ?? '').replace(new RegExp(`${extension.replace('.', '\\.')}$`, 'i'), '');
 }
 
 /** Produces a filename safe for downloading. Always returns a non-empty name ending in .pdf unless another extension is given. */
