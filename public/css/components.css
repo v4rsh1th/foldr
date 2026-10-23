@@ -364,6 +364,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+.file-item__thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  object-fit: cover;
+}
+
 .file-item__body {
   min-width: 0;
 }
@@ -1400,7 +1408,8 @@
   justify-content: space-between;
 }
 
-.scan-fields {
+.scan-fields,
+.option-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-4);

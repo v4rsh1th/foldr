@@ -3,6 +3,7 @@ export const APP_VERSION = '1.0.0';
 
 export const PDFJS_VERSION = '5.7.284';
 export const PDF_LIB_VERSION = '1.17.1';
+export const LIBHEIF_VERSION = '1.23.5';
 
 const MB = 1024 * 1024;
 

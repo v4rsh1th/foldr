@@ -16,6 +16,7 @@ import { mount as mountSplit } from './tools/split.js';
 import { mountOrganize, mountRotate } from './tools/page-editor.js';
 import { mount as mountCompress } from './tools/compress.js';
 import { mount as mountScan } from './tools/scan.js';
+import { mount as mountCompressImages } from './tools/compress-images.js';
 import { toolById } from './tools/tool-shell.js';
 
 const VIEWS = {
@@ -26,6 +27,7 @@ const VIEWS = {
   rotate: mountRotate,
   compress: mountCompress,
   scan: mountScan,
+  'compress-images': mountCompressImages,
 };
 
 const viewRoot = document.getElementById('view');
@@ -79,10 +81,10 @@ window.addEventListener('beforeunload', (event) => {
 });
 
 // ---- Page-wide drag and drop -------------------------------------------------
-// Dropping a PDF anywhere goes to the current tool, and never makes the
+// Dropping a file anywhere goes to the current tool, and never makes the
 // browser navigate away to display the file.
 
-const overlay = h('div', { class: 'global-drop-overlay', hidden: true, 'aria-hidden': 'true' }, h('span', { text: 'Drop PDFs to add them' }));
+const overlay = h('div', { class: 'global-drop-overlay', hidden: true, 'aria-hidden': 'true' }, h('span', { text: 'Drop files to add them' }));
 document.body.append(overlay);
 let dragDepth = 0;
 window.addEventListener('dragenter', (event) => {

@@ -1,4 +1,4 @@
-// Copies the pinned browser builds of pdf-lib and PDF.js into public/vendor/.
+// Copies the pinned browser builds of pdf-lib, PDF.js and libheif into public/vendor/.
 // Vendor directories embed the library version so they can be served with
 // long-lived immutable cache headers and never mix across upgrades.
 import { cp, mkdir, rm, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -60,4 +60,12 @@ const interDir = path.join(vendorRoot, `inter@${interVersion}`);
 await copyFiles(path.join(interSrc, 'files'), interDir, ['inter-latin-opsz-normal.woff2', 'inter-latin-ext-opsz-normal.woff2']);
 await copyFiles(interSrc, interDir, ['LICENSE']);
 
-console.log(`Vendored pdf-lib@${pdfLibVersion}, pdfjs@${pdfjsVersion} and inter@${interVersion} into public/vendor/`);
+// libheif (LGPL-3.0) decodes HEIC/HEIF photos in browsers that can't. It is
+// the ES module build with the WebAssembly inlined, kept as a separate,
+// unmodified file and loaded only when such a photo is opened.
+const libheifVersion = await versionOf('libheif-js');
+const libheifSrc = path.join(modules, 'libheif-js');
+const libheifDir = path.join(vendorRoot, `libheif@${libheifVersion}`);
+await copyFiles(path.join(libheifSrc, 'libheif-wasm'), libheifDir, ['libheif-bundle.mjs', 'LICENSE']);
+
+console.log(`Vendored pdf-lib@${pdfLibVersion}, pdfjs@${pdfjsVersion}, libheif@${libheifVersion} and inter@${interVersion} into public/vendor/`);

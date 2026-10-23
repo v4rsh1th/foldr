@@ -10,7 +10,8 @@
 //    service worker update check and applied when the user reloads.
 //  - Other same-origin static files are cache-first. Large optional PDF.js
 //    data (CJK CMaps, standard font substitutes) is cached the first time
-//    it is used, rather than downloading ~2.6 MB up front.
+//    it is used, rather than downloading ~2.6 MB up front. The same goes
+//    for the HEIC decoder (libheif, ~2 MB), fetched on the first HEIC photo.
 //  - Nothing user-generated is ever cached: documents are opened from local
 //    files and outputs are blob: URLs, which never pass through here.
 
@@ -54,6 +55,7 @@ const PRECACHE = [
   'js/core/zip.js',
   'js/core/scan-geometry.js',
   'js/core/scan-enhance.js',
+  'js/core/image-compress.js',
   'js/ui/dom.js',
   'js/ui/icons.js',
   'js/ui/dialogs.js',
@@ -72,6 +74,7 @@ const PRECACHE = [
   'js/tools/page-editor.js',
   'js/tools/compress.js',
   'js/tools/scan.js',
+  'js/tools/compress-images.js',
   'js/operations/common.js',
   'js/operations/merge.js',
   'js/operations/split.js',
@@ -80,6 +83,8 @@ const PRECACHE = [
   'js/operations/scan.js',
   'js/workers/pdf-worker.js',
   'js/workers/scan-worker.js',
+  'js/workers/image-worker.js',
+  'js/workers/heif-decoder.js',
   `${PDF_LIB}pdf-lib.esm.min.js`,
   `${PDFJS}pdf.min.mjs`,
   `${PDFJS}pdf.worker.min.mjs`,

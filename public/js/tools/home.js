@@ -1,7 +1,8 @@
 import { pluralize } from '../core/format.js';
 import { h, replaceChildren } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
-import { createDropZone } from '../ui/drop-zone.js';
+import { createDropZone, PDF_ACCEPT } from '../ui/drop-zone.js';
+import { IMAGE_ACCEPT } from '../core/image-compress.js';
 import { TOOLS } from './tool-shell.js';
 
 function toolCard(tool, { disabled = false, onClick } = {}) {
@@ -28,9 +29,10 @@ export function mount({ container, handOff }) {
 
   const dropZone = createDropZone({
     multiple: true,
-    title: 'Choose PDF files',
+    accept: `${PDF_ACCEPT},${IMAGE_ACCEPT}`,
+    title: 'Choose PDFs or images',
     hint: 'or drag and drop them here',
-    buttonLabel: 'Select PDFs',
+    buttonLabel: 'Select files',
     onFiles: (files) => {
       pending = files;
       renderChooser();
@@ -51,7 +53,7 @@ export function mount({ container, handOff }) {
     dropZone.setCompact(pending.length > 0);
     if (!pending.length) return;
     const many = pending.length > 1;
-    // Photos can only be scanned; PDFs go to the PDF tools.
+    // Photos go to the image tools (scan, compress); PDFs to the PDF tools.
     const photos = pending.every((file) => file.type.startsWith('image/'));
     const tools = TOOLS.filter((tool) => (tool.input === 'images') === photos);
     const title = many ? `${pluralize(pending.length, 'file')} selected` : pending[0].name;
@@ -73,7 +75,7 @@ export function mount({ container, handOff }) {
   container.append(h('div', { class: 'home' },
     h('div', { class: 'home-intro' },
       heading,
-      h('p', { text: 'Merge, split, organize, rotate, compress and scan your documents, quickly and securely.' }),
+      h('p', { text: 'Merge, split, organize, rotate, compress and scan your documents, and shrink your images, quickly and securely.' }),
     ),
     dropZone.element,
     chooser,

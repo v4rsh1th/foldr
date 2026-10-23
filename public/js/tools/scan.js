@@ -12,6 +12,7 @@ import { createExportManager } from '../export-manager.js';
 import { defaultOutputName } from '../core/filenames.js';
 import { formatBytes, pluralize } from '../core/format.js';
 import { FULL_QUAD } from '../core/scan-geometry.js';
+import { IMAGE_ACCEPT } from '../core/image-compress.js';
 import { h, uid } from '../ui/dom.js';
 import { icon } from '../ui/icons.js';
 import { createResultPanel } from '../ui/result-panel.js';
@@ -41,7 +42,6 @@ const QUALITIES = [
 // A4's long side, in inches: the longest edge any page is rendered for.
 const LONG_EDGE_INCHES = 11.69;
 
-export const IMAGE_ACCEPT = 'image/*';
 
 const isImage = (file) => file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(file.name);
 

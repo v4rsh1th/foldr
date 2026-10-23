@@ -1,6 +1,6 @@
 # Foldr
 
-Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It merges, splits, organizes, rotates and compresses PDFs, and scans paper documents into PDFs, on the user's own device: there are no uploads, accounts, watermarks, ads or tracking. It installs as a Progressive Web App (PWA) and keeps working offline.
+Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It merges, splits, organizes, rotates and compresses PDFs, scans paper documents into PDFs and compresses images, on the user's own device: there are no uploads, accounts, watermarks, ads or tracking. It installs as a Progressive Web App (PWA) and keeps working offline.
 
 | Tool | What it does |
 | --- | --- |
@@ -10,6 +10,7 @@ Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It
 | **Rotate Pages** | Rotates the whole document, selected pages or single pages. Writes `/Rotate` into the file. |
 | **Compress PDF** | Lossless clean-up, plus two image re-encoding levels. Reports the real size change, including when the file gets larger. |
 | **Scan Document** | Photographs pages with the camera (or imports photos), finds the page edges, straightens the page and removes shadows. Looks: Document (colour), Black & white (1-bit, sharpest and smallest), Greyscale, Original. Corners can be adjusted by hand. The PDF can be downloaded or shared through the system share sheet. |
+| **Compress Images** | Re-encodes JPEG, PNG, WebP, HEIC and other photos at three levels, optionally scales them down (4K to 800 px) and converts them to JPEG or WebP. An image that wouldn't get smaller (or, when only the quality changes, not at least 5% smaller) is kept exactly as it was, unless a different format was explicitly chosen. Re-encoding drops camera metadata such as GPS location. Several results can be downloaded as a ZIP. |
 
 ### How scanning works
 
@@ -173,6 +174,8 @@ Other headers: `nosniff`, `no-referrer`, COOP/CORP `same-origin`, `X-Frame-Optio
 
 The PDF.js worker (1.26 MB raw) is by far the largest dependency. PDF libraries load lazily when first needed.
 
+The HEIC decoder (libheif 1.23.5, WebAssembly, 2.1 MB) isn't precached or counted above. Only Safari decodes HEIC natively, so the image workers ([workers/heif-decoder.js](public/js/workers/heif-decoder.js)) load it the first time a HEIC photo fails to decode, and the service worker then caches it for offline use.
+
 ### Performance (headless Chromium, Apple Silicon)
 
 | Scenario | Result |
@@ -208,4 +211,4 @@ Phones and low-memory devices will be slower. Files are held in memory while pro
 
 ## License
 
-MIT. See [LICENSE](LICENSE). pdf-lib (MIT), PDF.js (Apache-2.0) and Inter (SIL Open Font License 1.1) are distributed with their own licenses in `public/vendor/`.
+MIT. See [LICENSE](LICENSE). pdf-lib (MIT), PDF.js (Apache-2.0), libheif (LGPL-3.0) and Inter (SIL Open Font License 1.1) are distributed with their own licenses in `public/vendor/`. libheif is shipped unmodified, as a separate file built by [libheif-js](https://github.com/catdad-experiments/libheif-js); its source is available there. It includes an HEVC decoder (libde265); HEVC is patent-encumbered, so check the licensing position before distributing Foldr commercially.

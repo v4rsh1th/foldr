@@ -3,7 +3,7 @@
 // can share files) and "start over".
 
 import { formatBytes, pluralize } from '../core/format.js';
-import { sanitizeFilename, stripPdfExtension } from '../core/filenames.js';
+import { sanitizeFilename, stripExtension } from '../core/filenames.js';
 import { h } from './dom.js';
 import { icon } from './icons.js';
 import { toast, announce } from './notifications.js';
@@ -35,9 +35,9 @@ export function createResultPanel({
   const sharing = share && canShareFiles();
 
   async function shareOutput(output, nameInput) {
-    const name = sanitizeFilename(`${nameInput.value}.pdf`);
+    const name = sanitizeFilename(`${nameInput.value}${output.extension}`, { extension: output.extension });
     try {
-      await navigator.share({ files: [new File([output.blob], name, { type: 'application/pdf' })], title: stripPdfExtension(name) });
+      await navigator.share({ files: [new File([output.blob], name, { type: output.blob.type })], title: stripExtension(name, output.extension) });
       output.name = name;
       onDownloaded(output);
     } catch (error) {
@@ -50,9 +50,9 @@ export function createResultPanel({
 
   function download(output, nameInput) {
     try {
-      const name = exportManager.download(output, `${nameInput.value}.pdf`);
+      const name = exportManager.download(output, `${nameInput.value}${output.extension}`);
       output.name = name;
-      nameInput.value = stripPdfExtension(name);
+      nameInput.value = stripExtension(name, output.extension);
       onDownloaded(output);
       announce(`Downloading ${name}`);
     } catch (error) {
@@ -67,15 +67,15 @@ export function createResultPanel({
       id: inputId,
       class: 'input',
       type: 'text',
-      value: stripPdfExtension(output.name),
+      value: stripExtension(output.name, output.extension),
       autocomplete: 'off',
       maxLength: 120,
     });
     nameInput.setAttribute('spellcheck', 'false');
     nameInput.addEventListener('change', () => {
-      const safe = stripPdfExtension(sanitizeFilename(`${nameInput.value}.pdf`));
+      const safe = stripExtension(sanitizeFilename(`${nameInput.value}${output.extension}`, { extension: output.extension }), output.extension);
       nameInput.value = safe;
-      output.name = `${safe}.pdf`;
+      output.name = `${safe}${output.extension}`;
     });
     nameInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') download(output, nameInput);
@@ -83,14 +83,14 @@ export function createResultPanel({
     return h('li', { class: 'output-item' },
       h('div', {},
         h('label', { class: 'visually-hidden', for: inputId, text: outputs.length > 1 ? `File name for output ${index + 1}` : 'File name' }),
-        h('div', { class: 'output-item__name' }, nameInput, h('span', { class: 'output-item__ext', 'aria-hidden': 'true', text: '.pdf' })),
+        h('div', { class: 'output-item__name' }, nameInput, h('span', { class: 'output-item__ext', 'aria-hidden': 'true', text: output.extension })),
       ),
       h('div', { class: 'output-item__buttons' },
         h('button', { type: 'button', class: 'btn btn--secondary', 'aria-label': `Open ${outputs.length > 1 ? `output ${index + 1}` : 'result'} in a new tab`, onClick: () => exportManager.open(output) }, icon('open'), 'Open'),
         sharing && h('button', { type: 'button', class: 'btn btn--secondary', onClick: () => shareOutput(output, nameInput) }, icon('share'), 'Share'),
         h('button', { type: 'button', class: `btn ${outputs.length === 1 && tone === 'success' ? 'btn--primary' : 'btn--secondary'}`, onClick: () => download(output, nameInput) }, icon('download'), downloadLabel),
       ),
-      h('p', { class: 'output-item__meta', text: `${pluralize(output.pageCount, 'page')} · ${formatBytes(output.size)}` }),
+      h('p', { class: 'output-item__meta', text: output.meta ?? `${pluralize(output.pageCount, 'page')} · ${formatBytes(output.size)}` }),
     );
   });
 
