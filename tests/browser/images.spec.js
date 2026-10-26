@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { crc32 } from 'node:zlib';
 import path from 'node:path';
 import { test, expect, download, fixtureDir, png } from './fixtures.js';
 
@@ -96,5 +97,64 @@ test.describe('compress images', () => {
     await chooseImages(page, [{ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') }]);
     await expect(page.getByText(/To make a PDF smaller, use Compress PDF/)).toBeVisible();
     await expect(page.getByRole('list', { name: 'Selected images' })).toHaveCount(0);
+  });
+});
+
+/** `png` with a tEXt chunk after IHDR, as image editors write one. */
+function pngWithText(keyword, value) {
+  const plain = png(40, 30, (x, y) => [x * 6, y * 8, 120]);
+  const data = Buffer.from(`${keyword}\0${value}`, 'latin1');
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  const body = Buffer.concat([Buffer.from('tEXt'), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([plain.subarray(0, 33), length, body, crc, plain.subarray(33)]);
+}
+
+test.describe('remove metadata', () => {
+  test('strips EXIF and IPTC from a JPEG, leaving the image decodable', async ({ page }) => {
+    await page.goto('/#/remove-metadata');
+    await expect(page.getByRole('heading', { level: 1, name: 'Remove Metadata' })).toBeVisible();
+    const original = await tinyJpeg();
+    await chooseImages(page, [{ name: 'IMG_0042.jpg', mimeType: 'image/jpeg', buffer: original }]);
+    await page.getByRole('button', { name: 'Remove metadata' }).click();
+    await expect(page.getByRole('heading', { name: 'Metadata removed from 1 image' })).toBeVisible();
+    await expect(page.getByText(/Removed: EXIF, IPTC/)).toBeVisible();
+
+    const result = await download(page, page.getByRole('button', { name: 'Download' }));
+    expect(result.name).toBe('IMG_0042.jpg');
+    const bytes = Buffer.from(result.bytes);
+    expect(bytes.includes(Buffer.from('Exif'))).toBe(false);
+    expect(bytes.includes(Buffer.from('Photoshop'))).toBe(false);
+    expect(bytes.length).toBeLessThan(original.length);
+    const size = await page.evaluate(async (data) => {
+      const bitmap = await createImageBitmap(new Blob([new Uint8Array(data)], { type: 'image/jpeg' }));
+      return [bitmap.width, bitmap.height];
+    }, [...bytes]);
+    expect(size).toEqual([16, 12]);
+  });
+
+  test('cleans PNGs, keeps ones without metadata, and refuses HEIC', async ({ page }) => {
+    await page.goto('/#/remove-metadata');
+    await chooseImages(page, [imagePath('desk-600x680.heic')]);
+    await expect(page.getByText(/For HEIC photos, use Compress Images/)).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Selected images' })).toHaveCount(0);
+
+    const clean = png(20, 20, () => [10, 200, 30]);
+    await chooseImages(page, [
+      { name: 'diagram.png', mimeType: 'image/png', buffer: pngWithText('Author', 'Jane Example') },
+      { name: 'clean.png', mimeType: 'image/png', buffer: clean },
+    ]);
+    await page.getByRole('button', { name: 'Remove metadata' }).click();
+    await expect(page.getByRole('heading', { name: 'Metadata removed from 1 image' })).toBeVisible();
+    await expect(page.getByText(/Removed: Text and comments/)).toBeVisible();
+    await expect(page.getByText(/No metadata found, kept as it was/)).toBeVisible();
+
+    const zip = await download(page, page.getByRole('button', { name: /Download all as ZIP/ }));
+    expect(zip.name).toBe('images-without-metadata.zip');
+    const archive = Buffer.from(zip.bytes);
+    expect(archive.includes(Buffer.from('Jane Example'))).toBe(false);
+    expect(archive.includes(clean)).toBe(true);
   });
 });

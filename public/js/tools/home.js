@@ -59,7 +59,7 @@ export function mount({ container, handOff }) {
     if (!pending.length) return;
     const many = pending.length > 1;
     // Offer only the tools that accept these files: photos go to Scan and
-    // Compress Images, PDFs to the rest.
+    // the image tools, PDFs to the rest.
     const photos = pending.every((file) => file.type.startsWith('image/'));
     const tools = TOOLS.filter((tool) => (tool.input === 'images') === photos);
     const title = many ? `${pluralize(pending.length, 'file')} selected` : pending[0].name;
@@ -81,7 +81,7 @@ export function mount({ container, handOff }) {
   container.append(h('div', { class: 'home' },
     h('div', { class: 'home-intro' },
       heading,
-      h('p', { text: 'Scan documents, shrink photos, and merge, split, organize, rotate or compress PDFs, quickly and securely.' }),
+      h('p', { text: 'Scan documents, shrink photos or strip their hidden metadata, and merge, split, organize, rotate or compress PDFs, quickly and securely.' }),
     ),
     dropZone.element,
     chooser,
