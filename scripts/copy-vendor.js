@@ -1,4 +1,5 @@
-// Copies the pinned browser builds of pdf-lib, PDF.js and libheif into public/vendor/.
+// Copies the pinned browser builds of pdf-lib, PDF.js, libheif and Tesseract.js
+// into public/vendor/.
 // Vendor directories embed the library version so they can be served with
 // long-lived immutable cache headers and never mix across upgrades.
 import { cp, mkdir, rm, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -19,6 +20,11 @@ async function copyFiles(from, to, files) {
   for (const file of files) await cp(path.join(from, file), path.join(to, file), { recursive: true });
 }
 
+async function dropSourceMap(file) {
+  const source = await readFile(file, 'utf8');
+  await writeFile(file, source.replace(/\n?\/\/# sourceMappingURL=\S+\s*$/, '\n'));
+}
+
 const pdfLibVersion = await versionOf('pdf-lib');
 const pdfjsVersion = await versionOf('pdfjs-dist');
 
@@ -31,8 +37,7 @@ await copyFiles(path.join(modules, 'pdf-lib', 'dist'), pdfLibDir, ['pdf-lib.esm.
 await copyFiles(path.join(modules, 'pdf-lib'), pdfLibDir, ['LICENSE.md']);
 // The source map is not shipped, so drop the reference to avoid a 404 in DevTools.
 const pdfLibFile = path.join(pdfLibDir, 'pdf-lib.esm.min.js');
-const pdfLibSource = await readFile(pdfLibFile, 'utf8');
-await writeFile(pdfLibFile, pdfLibSource.replace(/\n?\/\/# sourceMappingURL=\S+\s*$/, '\n'));
+await dropSourceMap(pdfLibFile);
 
 const pdfjsSrc = path.join(modules, 'pdfjs-dist');
 const pdfjsDir = path.join(vendorRoot, `pdfjs@${pdfjsVersion}`);
@@ -68,4 +73,34 @@ const libheifSrc = path.join(modules, 'libheif-js');
 const libheifDir = path.join(vendorRoot, `libheif@${libheifVersion}`);
 await copyFiles(path.join(libheifSrc, 'libheif-wasm'), libheifDir, ['libheif-bundle.mjs', 'LICENSE']);
 
-console.log(`Vendored pdf-lib@${pdfLibVersion}, pdfjs@${pdfjsVersion}, libheif@${libheifVersion} and inter@${interVersion} into public/vendor/`);
+// Tesseract.js (Apache-2.0) recognises text in scans. Loaded only when a
+// scan is made searchable. The library spawns its own classic worker, which
+// loads one of the LSTM-only WebAssembly cores (with and without SIMD; the
+// wasm is inlined) and the English model.
+const tesseractVersion = await versionOf('tesseract.js');
+const tesseractSrc = path.join(modules, 'tesseract.js');
+const tesseractDir = path.join(vendorRoot, `tesseract@${tesseractVersion}`);
+await copyFiles(path.join(tesseractSrc, 'dist'), tesseractDir, [
+  'tesseract.esm.min.js', 'worker.min.js', 'tesseract.min.js.LICENSE.txt', 'worker.min.js.LICENSE.txt',
+]);
+await copyFiles(tesseractSrc, tesseractDir, ['LICENSE.md']);
+await dropSourceMap(path.join(tesseractDir, 'tesseract.esm.min.js'));
+await dropSourceMap(path.join(tesseractDir, 'worker.min.js'));
+
+const tesseractCoreVersion = await versionOf('tesseract.js-core');
+await copyFiles(path.join(modules, 'tesseract.js-core'), path.join(vendorRoot, `tesseract-core@${tesseractCoreVersion}`), [
+  'tesseract-core-relaxedsimd-lstm.wasm.js', 'tesseract-core-simd-lstm.wasm.js', 'tesseract-core-lstm.wasm.js', 'LICENSE',
+]);
+
+// English model from tessdata_best (integer-quantised), gzipped.
+const tesseractEngVersion = await versionOf('@tesseract.js-data/eng');
+const tesseractEngDir = path.join(vendorRoot, `tesseract-eng@${tesseractEngVersion}`);
+await copyFiles(path.join(modules, '@tesseract.js-data', 'eng', '4.0.0_best_int'), tesseractEngDir, ['eng.traineddata.gz']);
+await writeFile(path.join(tesseractEngDir, 'NOTICE'), [
+  'eng.traineddata.gz is the English model from tessdata_best (https://github.com/tesseract-ocr/tessdata_best),',
+  'licensed under the Apache License 2.0, as packaged by @tesseract.js-data/eng (MIT).',
+  '',
+].join('\n'));
+
+console.log(`Vendored pdf-lib@${pdfLibVersion}, pdfjs@${pdfjsVersion}, libheif@${libheifVersion}, inter@${interVersion}, `
+  + `tesseract@${tesseractVersion}, tesseract-core@${tesseractCoreVersion} and tesseract-eng@${tesseractEngVersion} into public/vendor/`);

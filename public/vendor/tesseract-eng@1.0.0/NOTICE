@@ -1,0 +1,2 @@
+eng.traineddata.gz is the English model from tessdata_best (https://github.com/tesseract-ocr/tessdata_best),
+licensed under the Apache License 2.0, as packaged by @tesseract.js-data/eng (MIT).

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { PDFDocument, StandardFonts } from '../../public/vendor/pdf-lib@1.17.1/pdf-lib.esm.min.js';
 import { buildScanDocument, layoutScanPage } from '../../public/js/operations/scan.js';
 import { packBits } from '../../public/js/core/scan-enhance.js';
 import { readWithPdfjs } from './helpers.js';
@@ -49,4 +50,33 @@ test('buildScanDocument embeds JPEG and 1-bit pages in order with the right size
 test('buildScanDocument refuses an empty scan and a broken image', async () => {
   await assert.rejects(buildScanDocument([]), { code: 'no-pages' });
   await assert.rejects(buildScanDocument([{ kind: 'jpeg', bytes: new Uint8Array([1, 2, 3]).buffer, width: 1, height: 1 }]), { code: 'invalid-image' });
+});
+
+test('buildScanDocument lays a text layer over the page, scaled to the image', async () => {
+  // Stands in for Tesseract's text-only page, which is sized from the
+  // image's resolution, not the PDF page's.
+  const layerDoc = await PDFDocument.create();
+  const layerPage = layerDoc.addPage([1200, 1600]);
+  const font = await layerDoc.embedFont(StandardFonts.Helvetica);
+  layerPage.drawText('Invoice 2041', { x: 100, y: 1400, size: 60, font });
+  const layer = await layerDoc.save();
+  const width = 300;
+  const height = 400;
+  const bits = packBits(new Uint8Array(width * height).fill(255), width, height, 128);
+  const { bytes } = await buildScanDocument([
+    { kind: 'bitonal', bytes: bits.buffer, width, height, textLayer: layer.buffer.slice(layer.byteOffset, layer.byteOffset + layer.byteLength) },
+    { kind: 'bitonal', bytes: bits.buffer.slice(0), width, height },
+  ], { pageSize: 'a4' });
+  const { pages } = await readWithPdfjs(bytes);
+  assert.deepEqual([pages[0].width, pages[0].height], [595, 842], 'the layer does not change the page size');
+  assert.equal(pages[0].text, 'Invoice 2041');
+  assert.equal(pages[1].text, '');
+});
+
+test('buildScanDocument refuses a broken text layer', async () => {
+  const bits = packBits(new Uint8Array(64).fill(255), 8, 8, 128);
+  await assert.rejects(
+    buildScanDocument([{ kind: 'bitonal', bytes: bits.buffer, width: 8, height: 8, textLayer: new Uint8Array([1, 2, 3]).buffer }]),
+    { code: 'invalid-text-layer' },
+  );
 });

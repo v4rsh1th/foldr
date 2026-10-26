@@ -7,6 +7,7 @@ const PHASE_LABELS = {
   load: 'Loading',
   preview: 'Previews',
   process: 'Processing',
+  ocr: 'Recognising text',
   write: 'Creating output',
   verify: 'Verifying',
   download: 'Preparing download',
