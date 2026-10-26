@@ -130,8 +130,9 @@ test.describe('scan document', () => {
     await page.goto('/');
     await page.locator('input[type=file]').first().setInputFiles([{ name: 'desk.png', mimeType: 'image/png', buffer: documentPhoto() }]);
     const chooser = page.locator('section.panel');
-    await expect(chooser.getByRole('link')).toHaveCount(2);
+    await expect(chooser.getByRole('link')).toHaveCount(3);
     await expect(chooser.getByRole('link', { name: /Compress Images/ })).toBeVisible();
+    await expect(chooser.getByRole('link', { name: /Remove Metadata/ })).toBeVisible();
     await chooser.getByRole('link', { name: /Scan Document/ }).click();
     await expect(page.getByRole('img', { name: 'Page 1 preview' })).toBeVisible();
   });
