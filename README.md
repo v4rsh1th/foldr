@@ -9,14 +9,16 @@ Foldr is a free, privacy-first PDF toolbox that runs entirely in the browser. It
 | **Organize PDF** | Visual thumbnail grid: reorder (drag and drop, keyboard or toolbar), rotate, delete with undo/redo. |
 | **Rotate Pages** | Rotates the whole document, selected pages or single pages. Writes `/Rotate` into the file. |
 | **Compress PDF** | Lossless clean-up, plus two image re-encoding levels. Reports the real size change, including when the file gets larger. |
-| **Scan Document** | Photographs pages with the camera (or imports photos), finds the page edges, straightens the page and removes shadows. Looks: Document (colour), Black & white (1-bit, sharpest and smallest), Greyscale, Original. Corners can be adjusted by hand. The PDF can be downloaded or shared through the system share sheet. |
+| **Scan Document** | Photographs pages with the camera (or imports photos), finds the page edges, straightens the page and removes shadows. Looks: Document (colour), Black & white (1-bit, sharpest and smallest), Greyscale, Original. Corners can be adjusted by hand. Optionally makes the text searchable (English OCR). The PDF can be downloaded or shared through the system share sheet. |
 | **Compress Images** | Re-encodes JPEG, PNG, WebP, HEIC and other photos at three levels, optionally scales them down (4K to 800 px) and converts them to JPEG or WebP. An image that wouldn't get smaller (or, when only the quality changes, not at least 5% smaller) is kept exactly as it was, unless a different format was explicitly chosen. Re-encoding drops camera metadata such as GPS location. Several results can be downloaded as a ZIP. |
+| **Remove Metadata** | Strips EXIF (including GPS location), XMP, IPTC, comments, text chunks and data after the image from JPEG, PNG and WebP files by rewriting the file's container; the compressed image data is copied byte for byte, so nothing is re-encoded ([core/image-metadata.js](public/js/core/image-metadata.js)). Colour profiles, transparency and animation are kept, and so is the EXIF orientation (written back as the only tag), so portrait photos stay upright. Extra MPF images, such as HDR gain maps, are dropped. HEIC photos are pointed to Compress Images, which converts them to JPEG without metadata. |
 
 ### How scanning works
 
 - The live camera view outlines the page a few times a second from a 320 px copy of the frame. Photos are taken with `ImageCapture.takePhoto()` (full sensor resolution, autofocus) where available, otherwise from the video stream.
 - Each photo is processed in a dedicated worker ([workers/scan-worker.js](public/js/workers/scan-worker.js)): page detection on a 480 px copy ([core/scan-geometry.js](public/js/core/scan-geometry.js)), then a perspective warp and the clean-up filters ([core/scan-enhance.js](public/js/core/scan-enhance.js)). The clean-up estimates the lighting as a smooth background map, divides it out so the paper is evenly white, stretches contrast and sharpens edges.
 - Previews are rendered from a 1600 px working copy, so changing the look or crop is instant. The PDF is rendered from the original photos at 300 ppi (High) or 200 ppi (Standard). JPEG pages are embedded without re-encoding; black-and-white pages are 1-bit Flate images.
+- **Make text searchable** runs [Tesseract.js](https://tesseract.projectnaptha.com/) 7 on each finished page in its own worker, overlapping with rendering the next page ([text-recognizer.js](public/js/text-recognizer.js)). Tesseract writes a one-page, text-only PDF per page (each word in an invisible glyphless font, stretched over the word in the image), and the PDF worker draws it over the scan as a Form XObject. The page looks the same, but its text can be searched, selected and copied. Recognition uses the English LSTM model (tessdata_best, integer-quantised) and adds a few seconds per page on a phone.
 - The server's `Permissions-Policy` allows the camera for Foldr's own origin only (`camera=(self)`). The camera stops as soon as the camera view closes.
 
 ## Quick start
@@ -129,7 +131,7 @@ Measured on the test fixtures: a text PDF with uncompressed streams went from 92
 - PDFs are read from the local file picker or drag and drop as `File` objects. They are processed in the page and its workers and saved as `Blob` downloads (`blob:` URLs, revoked once the result is discarded).
 - The server is a static file server. It has **no upload endpoints and no body parsers**, and it answers every method other than GET/HEAD with `405`. A test checks this.
 - No analytics, telemetry, ads, third-party scripts, font services or CDNs. The Inter typeface is self-hosted. The CSP is `connect-src 'self'` and all assets, including the font, are same-origin. The browser tests fail if any request leaves the origin or uses a method other than GET/HEAD while documents are processed.
-- Nothing is persisted. The client never uses `localStorage`, IndexedDB or cookies, and a test checks the client source for this. The service worker caches only versioned app files; a test confirms no PDFs or `blob:` URLs end up in Cache Storage.
+- Nothing is persisted. The client never uses `localStorage`, IndexedDB or cookies (Tesseract.js is started with `cacheMethod: 'none'`, which keeps its model out of IndexedDB), and a test checks the client source for this. The service worker caches only versioned app files; a test confirms no PDFs or `blob:` URLs end up in Cache Storage.
 - Filenames are treated as untrusted. They are shown only via `textContent` (a test uses an HTML-injection filename) and sanitised before they become download names. They never appear in URLs or logs.
 - Logs contain error names and codes only, never document contents or names.
 
@@ -174,6 +176,8 @@ Other headers: `nosniff`, `no-referrer`, COOP/CORP `same-origin`, `X-Frame-Optio
 
 The PDF.js worker (1.26 MB raw) is by far the largest dependency. PDF libraries load lazily when first needed.
 
+The text recogniser (Tesseract.js 7, about 4.5 MB gzipped: a 1.5 MB WebAssembly core, picked for the browser's SIMD support, and the 3 MB English model) isn't precached or counted above either. It loads the first time a scan is made searchable, and the service worker then caches it for offline use.
+
 The HEIC decoder (libheif 1.23.5, WebAssembly, 2.1 MB) isn't precached or counted above. Only Safari decodes HEIC natively, so the image workers ([workers/heif-decoder.js](public/js/workers/heif-decoder.js)) load it the first time a HEIC photo fails to decode, and the service worker then caches it for offline use.
 
 ### Performance (headless Chromium, Apple Silicon)
@@ -198,6 +202,7 @@ Phones and low-memory devices will be slower. Files are held in memory while pro
 - Previews use PDF.js, which may render rare files differently from other viewers. XFA forms aren't rendered.
 - Drag-and-drop on touch screens starts from the grip handle (so scrolling still works); toolbar buttons and keyboard shortcuts are alternatives. Multi-page drag isn't supported: select pages and use the move buttons instead.
 - On iOS Safari, blob downloads may open in the built-in viewer rather than saving directly, depending on the iOS version.
+- Text recognition is English only. Other Latin-script text is often recognised, but accents may be lost. Tesseract needs a straight, reasonably sharp page; handwriting is rarely recognised. A searchable scan made offline needs the recogniser to have been downloaded once before.
 - Automated browser tests run in Chromium only. Firefox and Safari are covered by the manual checklist.
 
 ## Future improvements
@@ -211,4 +216,4 @@ Phones and low-memory devices will be slower. Files are held in memory while pro
 
 ## License
 
-MIT. See [LICENSE](LICENSE). pdf-lib (MIT), PDF.js (Apache-2.0), libheif (LGPL-3.0) and Inter (SIL Open Font License 1.1) are distributed with their own licenses in `public/vendor/`. libheif is shipped unmodified, as a separate file built by [libheif-js](https://github.com/catdad-experiments/libheif-js); its source is available there. It includes an HEVC decoder (libde265); HEVC is patent-encumbered, so check the licensing position before distributing Foldr commercially.
+MIT. See [LICENSE](LICENSE). pdf-lib (MIT), PDF.js (Apache-2.0), Tesseract.js and its core (Apache-2.0), the English Tesseract model (Apache-2.0), libheif (LGPL-3.0) and Inter (SIL Open Font License 1.1) are distributed with their own licenses in `public/vendor/`. libheif is shipped unmodified, as a separate file built by [libheif-js](https://github.com/catdad-experiments/libheif-js); its source is available there. It includes an HEVC decoder (libde265); HEVC is patent-encumbered, so check the licensing position before distributing Foldr commercially.

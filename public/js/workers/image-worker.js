@@ -1,6 +1,6 @@
 // Image worker for Compress Images: decodes each photo, scales it down if
 // asked and re-encodes it with the browser's own encoders, off the main
-// thread. It speaks the same message protocol as the PDF worker, so
+// thread. It also removes metadata for Remove Metadata, without decoding. It speaks the same message protocol as the PDF worker, so
 // PdfWorkerClient drives it too.
 //
 // Re-encoding writes pixels only, so camera metadata (EXIF, including GPS
@@ -9,6 +9,7 @@
 
 import { IMAGE_LEVELS, MIN_SAVING_RATIO, fitWithin, outputTypeFor } from '../core/image-compress.js';
 import { decodeImage } from './heif-decoder.js';
+import { MetadataError, stripMetadata } from '../core/image-metadata.js';
 
 class ImageError extends Error {
   constructor(code, message) {
@@ -100,6 +101,18 @@ const handlers = {
       image.close();
     }
   },
+
+  /** Returns the image without its metadata, or just `removed: []` when it had none. */
+  async stripMetadata({ blob }) {
+    try {
+      const { type, bytes, removed } = await stripMetadata(new Uint8Array(await blob.arrayBuffer()));
+      if (!removed.length) return { removed };
+      return { removed, blob: new Blob([bytes], { type }) };
+    } catch (error) {
+      if (error instanceof MetadataError) throw new ImageError(error.code, error.message);
+      throw error;
+    }
+  },
 };
 
 function serializeError(error) {
@@ -107,7 +120,7 @@ function serializeError(error) {
   if (/allocation failed|out of memory|invalid array length|invalid typed array length/i.test(error?.message ?? '')) {
     return { code: 'memory', message: 'Your browser ran out of memory with this image. Close other tabs, or choose smaller dimensions.' };
   }
-  return { code: 'internal', message: 'Something went wrong while compressing this image.' };
+  return { code: 'internal', message: 'Something went wrong with this image.' };
 }
 
 self.addEventListener('message', async (event) => {

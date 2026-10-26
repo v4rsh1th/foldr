@@ -24,6 +24,27 @@ function documentPhoto() {
   });
 }
 
+/** A photo of a printed letter on a dark desk, drawn by the browser so the text is real. */
+async function letterPhoto(page) {
+  const dataUrl = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1500;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f4f2ec';
+    ctx.fillRect(120, 100, 960, 1300);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 56px Georgia, serif';
+    ctx.fillText('Invoice 2041', 200, 260);
+    ctx.font = '36px Georgia, serif';
+    ['Thank you for your order.', 'The total amount due is 1,280.50', 'payable within thirty days.'].forEach((line, i) => ctx.fillText(line, 200, 380 + i * 64));
+    return canvas.toDataURL('image/png');
+  });
+  return Buffer.from(dataUrl.split(',')[1], 'base64');
+}
+
 async function importPhotos(page, files) {
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'Import photos' }).click()]);
   await chooser.setFiles(files);
@@ -57,6 +78,36 @@ test.describe('scan document', () => {
     const bw = await download(page, page.getByRole('button', { name: 'Download' }));
     expect((await inspectPdf(bw.bytes)).pages).toHaveLength(1);
     expect(bw.bytes.length).toBeLessThan(colour.bytes.length);
+  });
+
+  test('makes the text of a scan searchable', async ({ page }) => {
+    test.slow(); // The first run downloads and starts the text recogniser.
+    await page.goto('/#/scan');
+    await importPhotos(page, [{ name: 'letter.png', mimeType: 'image/png', buffer: await letterPhoto(page) }]);
+    await expect(page.getByRole('img', { name: 'Page 1 preview' })).toBeVisible();
+    await page.getByText('Black & white', { exact: true }).click();
+    await page.getByRole('checkbox', { name: /Make text searchable/ }).check();
+    await page.getByRole('button', { name: 'Create PDF' }).click();
+    await expect(page.getByRole('heading', { name: 'Your scan is ready' })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/· searchable text$/)).toBeVisible();
+    const { bytes } = await download(page, page.getByRole('button', { name: 'Download' }));
+    const { pages } = await inspectPdf(bytes);
+    expect(pages[0].text).toContain('Invoice 2041');
+    expect(pages[0].text).toContain('thirty days');
+
+    // Colour pages are recognised too.
+    await page.getByRole('button', { name: 'Back to pages' }).click();
+    await page.getByText('Document', { exact: true }).click();
+    await page.getByRole('button', { name: 'Create PDF' }).click();
+    const colour = await download(page, page.getByRole('button', { name: 'Download' }));
+    expect((await inspectPdf(colour.bytes)).pages[0].text).toContain('Invoice 2041');
+
+    // Without the option, the page is an image only.
+    await page.getByRole('button', { name: 'Back to pages' }).click();
+    await page.getByRole('checkbox', { name: /Make text searchable/ }).uncheck();
+    await page.getByRole('button', { name: 'Create PDF' }).click();
+    const plain = await download(page, page.getByRole('button', { name: 'Download' }));
+    expect((await inspectPdf(plain.bytes)).pages[0].text).toBe('');
   });
 
   test('scans a HEIC photo', async ({ page }) => {
@@ -130,8 +181,9 @@ test.describe('scan document', () => {
     await page.goto('/');
     await page.locator('input[type=file]').first().setInputFiles([{ name: 'desk.png', mimeType: 'image/png', buffer: documentPhoto() }]);
     const chooser = page.locator('section.panel');
-    await expect(chooser.getByRole('link')).toHaveCount(2);
+    await expect(chooser.getByRole('link')).toHaveCount(3);
     await expect(chooser.getByRole('link', { name: /Compress Images/ })).toBeVisible();
+    await expect(chooser.getByRole('link', { name: /Remove Metadata/ })).toBeVisible();
     await chooser.getByRole('link', { name: /Scan Document/ }).click();
     await expect(page.getByRole('img', { name: 'Page 1 preview' })).toBeVisible();
   });

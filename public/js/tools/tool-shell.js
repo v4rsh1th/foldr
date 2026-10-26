@@ -15,6 +15,7 @@ export const TOOLS = [
   { id: 'rotate', title: 'Rotate Pages', icon: 'rotate', description: 'Rotate the whole document or selected pages.' },
   { id: 'compress', title: 'Compress PDF', icon: 'compress', description: 'Reduce file size with lossless or image-based options.' },
   { id: 'compress-images', title: 'Compress Images', icon: 'image', description: 'Shrink photos and images, resize them or convert them to JPEG or WebP.', input: 'images' },
+  { id: 'remove-metadata', title: 'Remove Metadata', icon: 'eraser', description: 'Strip EXIF, GPS location and other hidden details from photos without changing a pixel.', input: 'images' },
 ];
 
 // Tools are grouped on the home screen by what they produce. That's separate

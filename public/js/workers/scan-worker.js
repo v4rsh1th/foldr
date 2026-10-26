@@ -111,16 +111,21 @@ const handlers = {
     return { blob: await encodeJpeg(page.rgba, page.width, page.height, 0.82), width: page.width, height: page.height };
   },
 
-  /** Final page for the PDF: JPEG bytes, or packed 1-bit pixels for black and white. */
-  async page({ jpegQuality, ...options }) {
+  /**
+   * Final page for the PDF: JPEG bytes, or packed 1-bit pixels for black and
+   * white. With `ocr`, also an image of the page for text recognition (`ocrImage`).
+   */
+  async page({ jpegQuality, ocr = false, ...options }) {
     const page = await renderPage(options);
     if (page.gray) {
       const bits = packBits(page.gray, page.width, page.height, page.threshold);
-      return { result: { kind: 'bitonal', bytes: bits.buffer, width: page.width, height: page.height }, transfer: [bits.buffer] };
+      // `rgba` holds the same black-and-white pixels.
+      const ocrImage = ocr ? await encodeJpeg(page.rgba, page.width, page.height, 0.9) : undefined;
+      return { result: { kind: 'bitonal', bytes: bits.buffer, width: page.width, height: page.height, ocrImage }, transfer: [bits.buffer] };
     }
     const blob = await encodeJpeg(page.rgba, page.width, page.height, jpegQuality);
     const bytes = await blob.arrayBuffer();
-    return { result: { kind: 'jpeg', bytes, width: page.width, height: page.height }, transfer: [bytes] };
+    return { result: { kind: 'jpeg', bytes, width: page.width, height: page.height, ocrImage: ocr ? blob : undefined }, transfer: [bytes] };
   },
 };
 

@@ -11,7 +11,9 @@
 //  - Other same-origin static files are cache-first. Large optional PDF.js
 //    data (CJK CMaps, standard font substitutes) is cached the first time
 //    it is used, rather than downloading ~2.6 MB up front. The same goes
-//    for the HEIC decoder (libheif, ~2 MB), fetched on the first HEIC photo.
+//    for the HEIC decoder (libheif, ~2 MB), fetched on the first HEIC photo,
+//    and the text recogniser (Tesseract, ~4.5 MB gzipped), fetched the first
+//    time a scan is made searchable.
 //  - Nothing user-generated is ever cached: documents are opened from local
 //    files and outputs are blob: URLs, which never pass through here.
 
@@ -47,6 +49,7 @@ const PRECACHE = [
   'js/pdf-renderer.js',
   'js/export-manager.js',
   'js/worker-client.js',
+  'js/text-recognizer.js',
   'js/core/filenames.js',
   'js/core/format.js',
   'js/core/page-order.js',
@@ -56,6 +59,7 @@ const PRECACHE = [
   'js/core/scan-geometry.js',
   'js/core/scan-enhance.js',
   'js/core/image-compress.js',
+  'js/core/image-metadata.js',
   'js/ui/dom.js',
   'js/ui/icons.js',
   'js/ui/dialogs.js',
@@ -75,6 +79,7 @@ const PRECACHE = [
   'js/tools/compress.js',
   'js/tools/scan.js',
   'js/tools/compress-images.js',
+  'js/tools/remove-metadata.js',
   'js/operations/common.js',
   'js/operations/merge.js',
   'js/operations/split.js',

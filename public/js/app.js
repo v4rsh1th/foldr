@@ -17,6 +17,7 @@ import { mountOrganize, mountRotate } from './tools/page-editor.js';
 import { mount as mountCompress } from './tools/compress.js';
 import { mount as mountScan } from './tools/scan.js';
 import { mount as mountCompressImages } from './tools/compress-images.js';
+import { mount as mountRemoveMetadata } from './tools/remove-metadata.js';
 import { toolById } from './tools/tool-shell.js';
 
 const VIEWS = {
@@ -28,6 +29,7 @@ const VIEWS = {
   compress: mountCompress,
   scan: mountScan,
   'compress-images': mountCompressImages,
+  'remove-metadata': mountRemoveMetadata,
 };
 
 const viewRoot = document.getElementById('view');

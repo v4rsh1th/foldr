@@ -2,6 +2,10 @@
 // colour and greyscale pages are JPEGs embedded as-is (no re-encoding), and
 // black-and-white pages are 1-bit images with Flate compression, which keeps
 // text razor-sharp at a fraction of a JPEG's size.
+//
+// A page can also carry a text layer: a one-page, text-only PDF from
+// Tesseract with the recognised words in invisible text. It is drawn over
+// the image at the same size, so the text lines up with the scan.
 
 import {
   PDFDocument,
@@ -63,8 +67,19 @@ function embedBitonal(doc, page, { bytes, width, height }, placement) {
   );
 }
 
+async function drawTextLayer(doc, page, bytes, placement) {
+  let layer;
+  try {
+    [layer] = await doc.embedPdf(new Uint8Array(bytes), [0]);
+  } catch (error) {
+    throw new PdfOperationError('invalid-text-layer', 'The recognised text couldn’t be added to the PDF. Try again, or turn off “Make text searchable”.', error);
+  }
+  page.drawPage(layer, placement);
+}
+
 /**
- * `pages`: [{ kind: 'jpeg' | 'bitonal', bytes, width, height }] in order.
+ * `pages`: [{ kind: 'jpeg' | 'bitonal', bytes, width, height, textLayer? }]
+ * in order, where `textLayer` is the bytes of a text-only PDF page.
  * Returns { bytes, pageCount }.
  */
 export async function buildScanDocument(pages, { pageSize = 'auto', title, onProgress = () => {} } = {}) {
@@ -87,6 +102,7 @@ export async function buildScanDocument(pages, { pageSize = 'auto', title, onPro
       }
       page.drawImage(embedded, placement);
     }
+    if (image.textLayer) await drawTextLayer(doc, page, image.textLayer, placement);
   }
   const now = new Date();
   if (title) doc.setTitle(title);

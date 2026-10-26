@@ -5,9 +5,14 @@
 // Photos stay as captured. Previews are rendered from a smaller working
 // copy; the PDF is rendered from the full-resolution photos only when it's
 // made, so changing the filter or the crop is instant and lossless.
+//
+// "Make text searchable" runs text recognition (Tesseract) on each finished
+// page while the next one renders, and adds the words to the PDF as an
+// invisible text layer.
 
 import { SCAN } from '../config.js';
 import { PdfWorkerClient } from '../worker-client.js';
+import { createTextRecognizer } from '../text-recognizer.js';
 import { createExportManager } from '../export-manager.js';
 import { defaultOutputName } from '../core/filenames.js';
 import { formatBytes, pluralize } from '../core/format.js';
@@ -74,12 +79,14 @@ export function mount({ container, client, initialFiles = [] }) {
   // the PDF never interrupts previews.
   const imageClient = new PdfWorkerClient(new URL('../workers/scan-worker.js', import.meta.url), { name: 'foldr-scan' });
   const exportClient = new PdfWorkerClient(new URL('../workers/scan-worker.js', import.meta.url), { name: 'foldr-scan-export' });
+  const recognizer = createTextRecognizer();
   const supported = typeof OffscreenCanvas === 'function' && typeof OffscreenCanvas.prototype.convertToBlob === 'function';
 
   let pages = [];
   let filter = 'auto';
   let pageSize = 'auto';
   let quality = 'high';
+  let searchable = false;
   let exportManager = null;
   let hasResult = false;
   let saved = true;
@@ -134,14 +141,21 @@ export function mount({ container, client, initialFiles = [] }) {
   };
   const sizeSelect = select('Page size', PAGE_SIZES, pageSize, (value) => { pageSize = value; });
   const qualitySelect = select('Quality', QUALITIES, quality, (value) => { quality = value; });
+  const searchableInput = h('input', { type: 'checkbox', checked: searchable, onChange: (event) => { searchable = event.target.checked; } });
+  const searchableChoice = h('label', { class: 'choice' },
+    searchableInput,
+    h('span', { class: 'choice__title', text: 'Make text searchable' }),
+    h('span', { class: 'choice__desc', text: 'Recognises English text so you can search, select and copy it. Adds a few seconds per page, and the first time downloads the text recogniser (about 4.5 MB).' }),
+  );
   const options = h('section', { class: 'panel stack', 'aria-label': 'Scan options' },
     filterGroup,
     h('div', { class: 'scan-fields' }, sizeSelect.field, qualitySelect.field),
+    searchableChoice,
   );
 
   const actionBar = createActionBar({ label: 'Create PDF', icon: 'file', onClick: createPdf });
   const status = createStatusArea({
-    client: { cancel: () => { exportClient.cancel(); client.cancel(); } },
+    client: { cancel: () => { exportClient.cancel(); recognizer.cancel(); client.cancel(); } },
     onBusyChange: () => renderPages(),
   });
   const inputSection = h('section', { class: 'tool-section' }, notice, capture, pagesSection, options, actionBar.element);
@@ -167,6 +181,7 @@ export function mount({ container, client, initialFiles = [] }) {
     for (const input of filterInputs) input.disabled = busy;
     sizeSelect.element.disabled = busy;
     qualitySelect.element.disabled = busy;
+    searchableInput.disabled = busy;
     actionBar.element.hidden = count === 0;
     let text = '';
     if (preparing) text = `Processing ${pluralize(preparing, 'photo')}…`;
@@ -397,43 +412,62 @@ export function mount({ container, client, initialFiles = [] }) {
     if (!list.length) return;
     const settings = SCAN.quality[quality];
     const maxSide = Math.round(settings.ppi * LONG_EDGE_INCHES);
-    const chosen = { filter, pageSize };
+    const chosen = { filter, pageSize, searchable };
     const stamp = timestamp();
     await status.run({
-      phases: ['process', 'write', 'verify'],
+      phases: chosen.searchable ? ['process', 'ocr', 'write', 'verify'] : ['process', 'write', 'verify'],
       task: async (onProgress) => {
         const rendered = [];
-        for (const [index, page] of list.entries()) {
-          onProgress({ phase: 'process', label: 'Enhancing pages', done: index, total: list.length });
-          rendered.push(await exportClient.request('page', {
-            blob: page.blob,
-            quad: page.quad,
-            rotation: page.rotation,
-            filter: chosen.filter,
-            maxSide,
-            // A finer grid for black and white gives smoother letter edges.
-            upscale: chosen.filter === 'bw' ? 1.5 : 1,
-            jpegQuality: settings.jpegQuality,
-          }));
+        // Text layers, recognised in Tesseract's worker while later pages render.
+        const textLayers = [];
+        try {
+          for (const [index, page] of list.entries()) {
+            onProgress({ phase: 'process', label: 'Enhancing pages', done: index, total: list.length });
+            const { ocrImage, ...result } = await exportClient.request('page', {
+              blob: page.blob,
+              quad: page.quad,
+              rotation: page.rotation,
+              filter: chosen.filter,
+              maxSide,
+              // A finer grid for black and white gives smoother letter edges.
+              upscale: chosen.filter === 'bw' ? 1.5 : 1,
+              jpegQuality: settings.jpegQuality,
+              ocr: chosen.searchable,
+            });
+            rendered.push(result);
+            if (ocrImage) {
+              const layer = recognizer.recognize(ocrImage);
+              layer.catch(() => {}); // Awaited below; this only silences an early rejection.
+              textLayers.push({ page: result, layer });
+            }
+          }
+          onProgress({ phase: 'process', label: 'Enhancing pages', done: list.length, total: list.length });
+          for (const [index, { page, layer }] of textLayers.entries()) {
+            onProgress({ phase: 'ocr', label: 'Recognising text', done: index, total: textLayers.length });
+            page.textLayer = await layer;
+          }
+        } catch (error) {
+          // Don't leave Tesseract working through pages nobody will use.
+          if (textLayers.length) recognizer.cancel();
+          throw error;
         }
-        onProgress({ phase: 'process', label: 'Enhancing pages', done: list.length, total: list.length });
         return client.request('scan', { pages: rendered, pageSize: chosen.pageSize, title: `Scan ${stamp.slice(0, 10)}` }, {
-          transfer: rendered.map((page) => page.bytes),
+          transfer: rendered.flatMap((page) => (page.textLayer ? [page.bytes, page.textLayer] : [page.bytes])),
           onProgress,
         });
       },
-      onSuccess: ({ buffer, pageCount }) => showResult(buffer, pageCount, stamp),
+      onSuccess: ({ buffer, pageCount }) => showResult(buffer, pageCount, stamp, chosen.searchable),
     });
   }
 
-  function showResult(buffer, pageCount, stamp) {
+  function showResult(buffer, pageCount, stamp, withText) {
     exportManager?.dispose();
     exportManager = createExportManager();
     const output = exportManager.createOutput({ buffer, name: defaultOutputName('scan', null, stamp), pageCount });
     hasResult = true;
     const panel = createResultPanel({
       title: 'Your scan is ready',
-      subtitle: `${pluralize(pageCount, 'page')} · ${formatBytes(output.size)}`,
+      subtitle: [pluralize(pageCount, 'page'), formatBytes(output.size), withText && 'searchable text'].filter(Boolean).join(' · '),
       outputs: [output],
       exportManager,
       share: true,
@@ -485,6 +519,7 @@ export function mount({ container, client, initialFiles = [] }) {
       if (status.busy) client.cancel();
       imageClient.cancel();
       exportClient.cancel();
+      recognizer.cancel();
       exportManager?.dispose();
       clearPages();
     },
